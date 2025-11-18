@@ -61,6 +61,7 @@
     "pusher-js": "^8.4.0-rc2"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "@types/react": "^18.3.11",
     "@types/react-native": "^0.73.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",

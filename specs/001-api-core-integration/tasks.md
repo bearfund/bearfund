@@ -22,13 +22,13 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Verify package.json, tsconfig.json, and build configuration exist per plan.md
-- [ ] T002 Create src/types/ directory structure
-- [ ] T003 Create src/core/api/ directory structure
-- [ ] T004 Create src/core/hooks/ directory structure
-- [ ] T005 Create src/core/realtime/ directory structure
-- [ ] T006 Create src/index.ts main entry point
-- [ ] T007 Create src/native.ts React Native entry point
+- [x] T001 Verify package.json, tsconfig.json, and build configuration exist per plan.md
+- [x] T002 Create src/types/ directory structure
+- [x] T003 Create src/core/api/ directory structure
+- [x] T004 Create src/core/hooks/ directory structure
+- [x] T005 Create src/core/realtime/ directory structure
+- [x] T006 Create src/index.ts main entry point
+- [x] T007 Create src/native.ts React Native entry point
 
 ---
 
@@ -38,12 +38,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Install peer dependencies: @tanstack/react-query@^5.59.0, axios@^1.7.7
-- [ ] T009 Install real-time dependencies: laravel-echo@^1.16.1, pusher-js@^8.4.0-rc2
-- [ ] T010 Configure TypeScript strict mode per plan.md (noImplicitAny, strictNullChecks, etc.)
-- [ ] T011 Setup tsup build configuration for dual CJS/ESM exports
-- [ ] T012 Create .eslintrc.json with TypeScript rules and no-unused-vars enforcement
-- [ ] T013 Create .prettierrc.json with 100 char line limit per constitution
+- [x] T008 Install peer dependencies: @tanstack/react-query@^5.59.0, axios@^1.7.7
+- [x] T009 Install real-time dependencies: laravel-echo@^1.16.1, pusher-js@^8.4.0-rc2
+- [x] T010 Configure TypeScript strict mode per plan.md (noImplicitAny, strictNullChecks, etc.)
+- [x] T011 Setup tsup build configuration for dual CJS/ESM exports
+- [x] T012 Create .eslintrc.json with TypeScript rules and no-unused-vars enforcement
+- [x] T013 Create .prettierrc.json with 100 char line limit per constitution
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -57,27 +57,27 @@
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Create AuthStorage interface in src/types/auth.types.ts (FR-001)
-- [ ] T015 [P] [US1] Create User interface in src/types/auth.types.ts (FR-002)
-- [ ] T016 [P] [US1] Create AuthResponse interface (flat structure) in src/types/auth.types.ts (FR-003)
-- [ ] T017 [P] [US1] Create LoginRequest, RegisterRequest, VerifyRequest, SocialLoginRequest, UpdateProfileRequest interfaces in src/types/auth.types.ts (FR-013)
-- [ ] T018 [P] [US1] Create ApiResponse<T> generic interface in src/types/api.types.ts (FR-004)
-- [ ] T019 [P] [US1] Create PaginatedResponse<T> and PaginationMeta interfaces in src/types/api.types.ts (FR-005)
-- [ ] T020 [P] [US1] Create ErrorResponse interface in src/types/api.types.ts (FR-006)
-- [ ] T021 [P] [US1] Create Game interface with ulid, game_title, state, game_state, players in src/types/game.types.ts (FR-007)
-- [ ] T022 [P] [US1] Create GameState type ('pending' | 'active' | 'completed' | 'forfeited') in src/types/game.types.ts
-- [ ] T023 [P] [US1] Create GameAction, GameHistory, GameActionRequest, GameOptions interfaces in src/types/game.types.ts (FR-008)
-- [ ] T024 [P] [US1] Create Lobby, LobbyPlayer, LobbyPlayerStatus, CreateLobbyRequest, UpdateLobbyPlayerRequest interfaces in src/types/game.types.ts (FR-009)
-- [ ] T025 [P] [US1] Create QuickplayRequest, QuickplayAcceptRequest, RematchRequest interfaces in src/types/game.types.ts
-- [ ] T026 [P] [US1] Create SubscriptionPlan, BillingStatus, UsageQuotas, SubscribeRequest, SubscribeResponse, CustomerPortalResponse interfaces in src/types/billing.types.ts (FR-010)
-- [ ] T027 [P] [US1] Create PlatformReceiptRequest and PlatformReceiptResponse interfaces in src/types/billing.types.ts
-- [ ] T028 [P] [US1] Create GameEvent, LobbyEvent, GameEventType, LobbyEventType, ConnectionStatus interfaces in src/types/realtime.types.ts (FR-011)
-- [ ] T029 [P] [US1] Create GameEventPayload discriminated union types in src/types/realtime.types.ts
-- [ ] T030 [P] [US1] Create LobbyEventPayload discriminated union types in src/types/realtime.types.ts
-- [ ] T031 [P] [US1] Create ChannelSubscription interface in src/types/realtime.types.ts
-- [ ] T032 [US1] Create src/types/index.ts barrel file exporting all types (FR-012)
-- [ ] T033 [US1] Add JSDoc comments to all exported types per constitution (FR-010, SC-010)
-- [ ] T034 [US1] Compile TypeScript in strict mode and verify zero implicit any types (SC-001)
+- [x] T014 [P] [US1] Create AuthStorage interface in src/types/auth.types.ts (FR-001)
+- [x] T015 [P] [US1] Create User interface in src/types/auth.types.ts (FR-002)
+- [x] T016 [P] [US1] Create AuthResponse interface (flat structure) in src/types/auth.types.ts (FR-003)
+- [x] T017 [P] [US1] Create LoginRequest, RegisterRequest, VerifyRequest, SocialLoginRequest, UpdateProfileRequest interfaces in src/types/auth.types.ts (FR-013)
+- [x] T018 [P] [US1] Create ApiResponse<T> generic interface in src/types/api.types.ts (FR-004)
+- [x] T019 [P] [US1] Create PaginatedResponse<T> and PaginationMeta interfaces in src/types/api.types.ts (FR-005)
+- [x] T020 [P] [US1] Create ErrorResponse interface in src/types/api.types.ts (FR-006)
+- [x] T021 [P] [US1] Create Game interface with ulid, game_title, state, game_state, players in src/types/game.types.ts (FR-007)
+- [x] T022 [P] [US1] Create GameState type ('pending' | 'active' | 'completed' | 'forfeited') in src/types/game.types.ts
+- [x] T023 [P] [US1] Create GameAction, GameHistory, GameActionRequest, GameOptions interfaces in src/types/game.types.ts (FR-008)
+- [x] T024 [P] [US1] Create Lobby, LobbyPlayer, LobbyPlayerStatus, CreateLobbyRequest, UpdateLobbyPlayerRequest interfaces in src/types/game.types.ts (FR-009)
+- [x] T025 [P] [US1] Create QuickplayRequest, QuickplayAcceptRequest, RematchRequest interfaces in src/types/game.types.ts
+- [x] T026 [P] [US1] Create SubscriptionPlan, BillingStatus, UsageQuotas, SubscribeRequest, SubscribeResponse, CustomerPortalResponse interfaces in src/types/billing.types.ts (FR-010)
+- [x] T027 [P] [US1] Create PlatformReceiptRequest and PlatformReceiptResponse interfaces in src/types/billing.types.ts
+- [x] T028 [P] [US1] Create GameEvent, LobbyEvent, GameEventType, LobbyEventType, ConnectionStatus interfaces in src/types/realtime.types.ts (FR-011)
+- [x] T029 [P] [US1] Create GameEventPayload discriminated union types in src/types/realtime.types.ts
+- [x] T030 [P] [US1] Create LobbyEventPayload discriminated union types in src/types/realtime.types.ts
+- [x] T031 [P] [US1] Create ChannelSubscription interface in src/types/realtime.types.ts
+- [x] T032 [US1] Create src/types/index.ts barrel file exporting all types (FR-012)
+- [x] T033 [US1] Add JSDoc comments to all exported types per constitution (FR-010, SC-010)
+- [x] T034 [US1] Compile TypeScript in strict mode and verify zero implicit any types (SC-001)
 
 **Checkpoint**: Types complete and importable. Provides IntelliSense and compile-time checking immediately.
 
