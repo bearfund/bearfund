@@ -1,0 +1,61 @@
+version: 2
+updates:
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      # Group all TypeScript-related updates
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "@typescript-eslint/*"
+      # Group all React-related updates
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      # Group all testing-related updates
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+      # Group all build tools
+      build-tools:
+        patterns:
+          - "vite"
+          - "tsup"
+          - "@vitejs/*"
+      # Group all linting tools
+      linting:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "prettier"
+      # Group all code quality tools
+      code-quality:
+        patterns:
+          - "husky"
+          - "lint-staged"
+          - "knip"
+    # Automatically merge minor/patch updates for dev dependencies
+    # (requires GitHub auto-merge to be enabled)
+    labels:
+      - "dependencies"
+      - "automated"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"

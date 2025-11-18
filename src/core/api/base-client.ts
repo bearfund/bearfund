@@ -1,9 +1,9 @@
 /**
  * Base API client configuration
- * 
+ *
  * Provides authenticated Axios client with automatic header injection and error handling.
  * Platform-agnostic - works identically across Web, React Native, Electron, and Telegram Mini Apps.
- * 
+ *
  * @packageDocumentation
  */
 
@@ -41,17 +41,17 @@ let isClearing401 = false;
 
 /**
  * Creates and configures an authenticated Axios client.
- * 
+ *
  * The client automatically:
  * - Injects X-Client-Key header on all requests
  * - Injects Authorization Bearer token when available
  * - Handles 401 errors by clearing stored tokens
  * - Transforms all errors to ErrorResponse format
- * 
+ *
  * @param config - API client configuration
  * @returns Configured Axios instance
  * @throws Error if baseURL format is invalid
- * 
+ *
  * @example Web/Electron (localStorage)
  * ```typescript
  * const authStorage: AuthStorage = {
@@ -59,23 +59,23 @@ let isClearing401 = false;
  *   setToken: async (token) => localStorage.setItem('auth_token', token),
  *   clearToken: async () => localStorage.removeItem('auth_token')
  * };
- * 
+ *
  * const client = setupAPIClient({
  *   clientKey: 'your-client-key',
  *   authStorage
  * });
  * ```
- * 
+ *
  * @example React Native (SecureStore)
  * ```typescript
  * import * as SecureStore from 'expo-secure-store';
- * 
+ *
  * const authStorage: AuthStorage = {
  *   getToken: async () => await SecureStore.getItemAsync('auth_token'),
  *   setToken: async (token) => await SecureStore.setItemAsync('auth_token', token),
  *   clearToken: async () => await SecureStore.deleteItemAsync('auth_token')
  * };
- * 
+ *
  * const client = setupAPIClient({
  *   clientKey: 'your-client-key',
  *   authStorage
@@ -122,7 +122,7 @@ export function setupAPIClient(config: APIClientConfig): AxiosInstance {
 
       return requestConfig;
     },
-    (error) => {
+    (error: Error) => {
       // Request setup failed - transform to ErrorResponse
       return Promise.reject(transformToErrorResponse(error));
     }
@@ -161,12 +161,12 @@ export function setupAPIClient(config: APIClientConfig): AxiosInstance {
 
 /**
  * Transforms Axios errors to standardized ErrorResponse format.
- * 
+ *
  * Handles three error types:
  * 1. Network errors (no response) - NETWORK_ERROR
  * 2. HTTP errors (4xx, 5xx) - error_code from API or status-based
  * 3. Request setup errors - REQUEST_ERROR
- * 
+ *
  * @param error - Axios error object
  * @returns Standardized ErrorResponse
  */
@@ -187,10 +187,11 @@ function transformToErrorResponse(error: unknown): ErrorResponse {
     const { data, status } = axiosError.response;
 
     // API returned ErrorResponse format
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (data && typeof data === 'object' && 'message' in data) {
       return {
         message: data.message,
-        error_code: data.error_code || `HTTP_${status}`,
+        error_code: data.error_code ?? `HTTP_${status}`,
         errors: data.errors,
       };
     }
