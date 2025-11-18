@@ -6,5 +6,5 @@
  * @packageDocumentation
  */
 
-// TODO: Will export setupAPIClient, createAPIClient, etc.
-export {};
+export { setupAPIClient } from './base-client';
+export type { APIClientConfig } from './base-client';

@@ -91,25 +91,25 @@
 
 ### Implementation for User Story 2
 
-- [ ] T035 [US2] Create src/core/api/base-client.ts file
-- [ ] T036 [US2] Implement setupAPIClient() function accepting config with clientKey, authStorage, baseURL in src/core/api/base-client.ts (FR-014)
-- [ ] T037 [US2] Set default baseURL to https://api.gamerprotocol.io/v1/ in setupAPIClient (FR-015)
-- [ ] T038 [US2] Create Axios instance with baseURL from config in setupAPIClient (FR-023)
-- [ ] T039 [US2] Implement request interceptor to inject X-Client-Key header on all requests (FR-016)
-- [ ] T040 [US2] Implement async request interceptor to call authStorage.getToken() before each request (FR-018)
-- [ ] T041 [US2] Inject Authorization: Bearer [token] header when getToken() returns non-null token (FR-017)
-- [ ] T042 [US2] Implement response interceptor to catch 401 Unauthorized errors (FR-019)
-- [ ] T043 [US2] Call authStorage.clearToken() when 401 error caught (FR-020)
-- [ ] T044 [US2] Transform all API errors to ErrorResponse type in error interceptor (FR-021)
-- [ ] T045 [US2] Handle network errors (no response) by creating ErrorResponse with NETWORK_ERROR code (FR-022)
-- [ ] T046 [US2] Add error handling for authStorage.getToken() failures (log error, proceed without auth)
-- [ ] T047 [US2] Add debounce/flag to prevent multiple simultaneous clearToken() calls on concurrent 401s
-- [ ] T048 [US2] Validate baseURL format at setup time and throw clear error if invalid
-- [ ] T049 [US2] Add JSDoc comments to setupAPIClient() with parameter descriptions
-- [ ] T050 [US2] Create src/core/api/index.ts exporting setupAPIClient
-- [ ] T051 [US2] Export API client utilities from src/core/index.ts
-- [ ] T052 [US2] Verify headers inject correctly with mock authStorage (SC-002)
-- [ ] T053 [US2] Verify 401 triggers clearToken within 100ms (SC-003)
+- [x] T035 [US2] Create src/core/api/base-client.ts file
+- [x] T036 [US2] Implement setupAPIClient() function accepting config with clientKey, authStorage, baseURL in src/core/api/base-client.ts (FR-014)
+- [x] T037 [US2] Set default baseURL to https://api.gamerprotocol.io/v1/ in setupAPIClient (FR-015)
+- [x] T038 [US2] Create Axios instance with baseURL from config in setupAPIClient (FR-023)
+- [x] T039 [US2] Implement request interceptor to inject X-Client-Key header on all requests (FR-016)
+- [x] T040 [US2] Implement async request interceptor to call authStorage.getToken() before each request (FR-018)
+- [x] T041 [US2] Inject Authorization: Bearer [token] header when getToken() returns non-null token (FR-017)
+- [x] T042 [US2] Implement response interceptor to catch 401 Unauthorized errors (FR-019)
+- [x] T043 [US2] Call authStorage.clearToken() when 401 error caught (FR-020)
+- [x] T044 [US2] Transform all API errors to ErrorResponse type in error interceptor (FR-021)
+- [x] T045 [US2] Handle network errors (no response) by creating ErrorResponse with NETWORK_ERROR code (FR-022)
+- [x] T046 [US2] Add error handling for authStorage.getToken() failures (log error, proceed without auth)
+- [x] T047 [US2] Add debounce/flag to prevent multiple simultaneous clearToken() calls on concurrent 401s
+- [x] T048 [US2] Validate baseURL format at setup time and throw clear error if invalid
+- [x] T049 [US2] Add JSDoc comments to setupAPIClient() with parameter descriptions
+- [x] T050 [US2] Create src/core/api/index.ts exporting setupAPIClient
+- [x] T051 [US2] Export API client utilities from src/core/index.ts
+- [x] T052 [US2] Verify headers inject correctly with mock authStorage (SC-002)
+- [x] T053 [US2] Verify 401 triggers clearToken within 100ms (SC-003)
 
 **Checkpoint**: API client complete. Ready for hook implementation.
 
