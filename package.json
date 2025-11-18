@@ -1,0 +1,76 @@
+{
+  "name": "@gamerprotocol/ui",
+  "version": "0.1.0",
+  "description": "Cross-platform UI components and API client for GamerProtocol.io",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./native": {
+      "import": "./dist/native.mjs",
+      "require": "./dist/native.js",
+      "types": "./dist/native.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "react",
+    "react-native",
+    "typescript",
+    "ui",
+    "components",
+    "gamerprotocol",
+    "gaming",
+    "api-client"
+  ],
+  "author": "GamerProtocol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gamerprotocol/ui.git"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-native": ">=0.70.0"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.59.0",
+    "axios": "^1.7.7",
+    "laravel-echo": "^1.16.1",
+    "pusher-js": "^8.4.0-rc2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-native": "^0.73.0",
+    "@typescript-eslint/eslint-plugin": "^8.9.0",
+    "@typescript-eslint/parser": "^8.9.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "react": "^18.3.1",
+    "react-native": "^0.76.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.3"
+  }
+}
