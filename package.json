@@ -7,14 +7,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./native": {
+      "types": "./dist/native.d.ts",
       "import": "./dist/native.mjs",
-      "require": "./dist/native.js",
-      "types": "./dist/native.d.ts"
+      "require": "./dist/native.js"
     }
   },
   "files": [
@@ -27,7 +27,19 @@
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "clean": "rm -rf dist"
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "npx prettier --write \"src/**/*.{ts,tsx,json,md}\"",
+    "format:check": "npx prettier --check \"src/**/*.{ts,tsx,json,md}\"",
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest watch",
+    "knip": "knip",
+    "check": "npm run type-check && npm run lint && npm run format:check && npm run test:run",
+    "check:quick": "npm run type-check && npm run lint",
+    "prepare": "husky"
   },
   "keywords": [
     "react",
@@ -46,7 +58,7 @@
     "url": "https://github.com/gamerprotocol/ui.git"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
+    "react": "^19.0.0",
     "react-native": ">=0.70.0"
   },
   "peerDependenciesMeta": {
@@ -61,16 +73,37 @@
     "pusher-js": "^8.4.0-rc2"
   },
   "devDependencies": {
-    "@types/react": "^18.3.11",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.6",
     "@types/react-native": "^0.73.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",
+    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/ui": "^4.0.10",
+    "axios-mock-adapter": "^2.1.0",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "react": "^18.3.1",
-    "react-native": "^0.76.1",
+    "husky": "^9.1.7",
+    "jsdom": "^27.2.0",
+    "knip": "^5.70.0",
+    "lint-staged": "^16.2.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-native": "^0.82.1",
     "tsup": "^8.3.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^4.0.10"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md}": [
+      "npx prettier --write"
+    ]
   }
 }

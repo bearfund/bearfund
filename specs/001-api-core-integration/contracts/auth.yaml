@@ -1,0 +1,493 @@
+openapi: 3.0.3
+info:
+  title: GamerProtocol API - Authentication
+  version: 1.0.0
+  description: Authentication and user management endpoints for the GamerProtocol platform.
+  contact:
+    name: GamerProtocol API Support
+    url: https://gamerprotocol.io
+
+servers:
+  - url: https://api.gamerprotocol.io/v1
+    description: Production API
+  - url: https://staging-api.gamerprotocol.io/v1
+    description: Staging API
+
+security:
+  - ClientKey: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user account
+      description: Creates a pending registration and sends verification email. Requires email verification before account activation.
+      operationId: registerUser
+      tags:
+        - Authentication
+      security:
+        - ClientKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              standard:
+                summary: Standard registration
+                value:
+                  username: johndoe
+                  email: john@example.com
+                  password: SecurePass123!
+                  password_confirmation: SecurePass123!
+                  name: John Doe
+      responses:
+        '201':
+          description: Registration initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Registration initiated. Please check your email to verify your account."
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/verify:
+    post:
+      summary: Verify email address
+      description: Validates email verification token, creates user account, and returns authentication token.
+      operationId: verifyEmail
+      tags:
+        - Authentication
+      security:
+        - ClientKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+      responses:
+        '200':
+          description: Email verified and account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/InvalidToken'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      summary: Login with email and password
+      description: Authenticate user with email/password credentials and return API token.
+      operationId: loginUser
+      tags:
+        - Authentication
+      security:
+        - ClientKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              standard:
+                summary: Standard login
+                value:
+                  email: john@example.com
+                  password: SecurePass123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/social:
+    post:
+      summary: Social login
+      description: Authenticate user with social provider access token (Google, Apple, Twitter, etc.).
+      operationId: socialLogin
+      tags:
+        - Authentication
+      security:
+        - ClientKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialLoginRequest'
+            examples:
+              google:
+                summary: Google login
+                value:
+                  provider: google
+                  access_token: ya29.a0AfH6SMBx...
+              apple:
+                summary: Apple login
+                value:
+                  provider: apple
+                  access_token: eyJraWQiOiJlWGF1b...
+      responses:
+        '200':
+          description: Social login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Revokes current API token and clears authentication session.
+      operationId: logoutUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+        - ClientKey: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/user:
+    get:
+      summary: Get authenticated user
+      description: Retrieve the currently authenticated user's profile information.
+      operationId: getAuthUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+        - ClientKey: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      summary: Update authenticated user
+      description: Update the currently authenticated user's profile information.
+      operationId: updateAuthUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+        - ClientKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+            examples:
+              partial:
+                summary: Update name only
+                value:
+                  name: Johnny Doe
+              full:
+                summary: Update all fields
+                value:
+                  name: Johnny Doe
+                  bio: Professional esports player specializing in strategy games
+                  social_links:
+                    twitter: https://twitter.com/johnnydoe
+                    twitch: https://twitch.tv/johnnydoe
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Laravel Sanctum user token
+    ClientKey:
+      type: apiKey
+      in: header
+      name: X-Client-Key
+      description: API key from clients table
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - password_confirmation
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Unique username (alphanumeric, underscore, hyphen only)
+          example: johndoe
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: User password (min 8 characters)
+          example: SecurePass123!
+        password_confirmation:
+          type: string
+          format: password
+          description: Password confirmation (must match password)
+          example: SecurePass123!
+        name:
+          type: string
+          maxLength: 100
+          description: User display name (optional)
+          example: John Doe
+
+    VerifyRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Email verification token from verification email
+          example: abc123def456...
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          description: User password
+          example: SecurePass123!
+
+    SocialLoginRequest:
+      type: object
+      required:
+        - provider
+        - access_token
+      properties:
+        provider:
+          type: string
+          enum: [google, apple, twitter, facebook]
+          description: Social authentication provider
+          example: google
+        access_token:
+          type: string
+          description: Access token from social provider
+          example: ya29.a0AfH6SMBx...
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: User display name
+          example: Johnny Doe
+        bio:
+          type: string
+          maxLength: 500
+          description: User biography/description
+          example: Professional esports player
+        social_links:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          description: Social media links (key = platform, value = URL)
+          example:
+            twitter: https://twitter.com/johnnydoe
+            twitch: https://twitch.tv/johnnydoe
+
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          description: Laravel Sanctum API token (format "tokenId|hash")
+          example: "1|abc123def456..."
+        user:
+          $ref: '#/components/schemas/User'
+      description: Authentication response (NOTE - flat structure, not wrapped in ApiResponse)
+
+    User:
+      type: object
+      required:
+        - username
+        - name
+        - avatar
+      properties:
+        username:
+          type: string
+          description: Unique username identifier
+          example: johndoe
+        name:
+          type: string
+          description: User display name
+          example: John Doe
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+          description: Avatar URL (Cloudinary CDN)
+          example: https://res.cloudinary.com/gamerprotocol/image/upload/v1/avatars/johndoe.jpg
+        bio:
+          type: string
+          nullable: true
+          description: User biography/description
+          example: Professional esports player
+        social_links:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Social media links
+          example:
+            twitter: https://twitter.com/johndoe
+            twitch: https://twitch.tv/johnnydoe
+
+    UserResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+          description: Optional success message
+          example: Profile updated successfully
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: The given data was invalid.
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Field-specific validation errors
+          example:
+            email: ["The email field is required."]
+            password: ["The password must be at least 8 characters."]
+
+  responses:
+    Unauthorized:
+      description: Authentication failed or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Unauthenticated.
+            error_code: UNAUTHORIZED
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: The given data was invalid.
+            error_code: VALIDATION_ERROR
+            errors:
+              email: ["The email field is required."]
+              password: ["The password must be at least 8 characters."]
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Too many requests. Please try again later.
+            error_code: RATE_LIMIT_EXCEEDED
+
+    InvalidToken:
+      description: Token is invalid or expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Invalid or expired verification token.
+            error_code: INVALID_TOKEN
+
+tags:
+  - name: Authentication
+    description: User authentication and profile management endpoints

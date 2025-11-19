@@ -1,0 +1,416 @@
+openapi: 3.0.3
+info:
+  title: GamerProtocol API - Billing & Subscriptions
+  version: 1.0.0
+  description: Subscription management, payment processing, and usage quota endpoints.
+
+servers:
+  - url: https://api.gamerprotocol.io/v1
+    description: Production API
+  - url: https://staging-api.gamerprotocol.io/v1
+    description: Staging API
+
+security:
+  - BearerAuth: []
+    ClientKey: []
+
+paths:
+  /billing/plans:
+    get:
+      summary: Get subscription plans
+      description: List available subscription plans with pricing and features.
+      operationId: getPlans
+      tags:
+        - Subscriptions
+      responses:
+        '200':
+          description: Plans retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlansResponse'
+
+  /billing/status:
+    get:
+      summary: Get billing status
+      description: Get current subscription status, plan level, and usage quotas.
+      operationId: getBillingStatus
+      tags:
+        - Subscriptions
+      responses:
+        '200':
+          description: Billing status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/subscribe:
+    post:
+      summary: Initiate subscription
+      description: Start subscription process and get Stripe checkout URL.
+      operationId: subscribe
+      tags:
+        - Subscriptions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /billing/manage:
+    get:
+      summary: Get customer portal URL
+      description: Get Stripe customer portal URL for subscription management.
+      operationId: getCustomerPortal
+      tags:
+        - Subscriptions
+      responses:
+        '200':
+          description: Portal URL retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPortalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/apple/verify:
+    post:
+      summary: Verify Apple receipt
+      description: Verify Apple App Store receipt for in-app purchase.
+      operationId: verifyAppleReceipt
+      tags:
+        - Platform Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformReceiptRequest'
+      responses:
+        '200':
+          description: Receipt verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformReceiptResponse'
+        '400':
+          $ref: '#/components/responses/InvalidReceipt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/google/verify:
+    post:
+      summary: Verify Google receipt
+      description: Verify Google Play receipt for in-app purchase.
+      operationId: verifyGoogleReceipt
+      tags:
+        - Platform Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformReceiptRequest'
+      responses:
+        '200':
+          description: Receipt verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformReceiptResponse'
+        '400':
+          $ref: '#/components/responses/InvalidReceipt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/telegram/verify:
+    post:
+      summary: Verify Telegram receipt
+      description: Verify Telegram Mini App payment receipt.
+      operationId: verifyTelegramReceipt
+      tags:
+        - Platform Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformReceiptRequest'
+      responses:
+        '200':
+          description: Receipt verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformReceiptResponse'
+        '400':
+          $ref: '#/components/responses/InvalidReceipt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ClientKey:
+      type: apiKey
+      in: header
+      name: X-Client-Key
+
+  schemas:
+    SubscriptionPlan:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - price_cents
+        - currency
+        - features
+        - quotas
+      properties:
+        id:
+          type: string
+          description: Plan identifier
+          example: pro_monthly
+        name:
+          type: string
+          description: Plan name
+          example: Pro
+        description:
+          type: string
+          description: Plan description
+          example: Advanced features for serious players
+        price_cents:
+          type: integer
+          description: Price in cents (0 for free tier)
+          example: 999
+        currency:
+          type: string
+          description: Currency code
+          example: USD
+        interval:
+          type: string
+          nullable: true
+          enum: [month, year, null]
+          description: Billing interval
+        features:
+          type: array
+          items:
+            type: string
+          description: List of plan features
+          example:
+            - Unlimited concurrent games
+            - Priority matchmaking
+            - Advanced statistics
+        quotas:
+          $ref: '#/components/schemas/UsageQuotas'
+
+    UsageQuotas:
+      type: object
+      required:
+        - max_concurrent_games
+        - api_requests_per_hour
+        - advanced_features_enabled
+      properties:
+        max_concurrent_games:
+          type: integer
+          description: Maximum concurrent games allowed
+          example: 10
+        api_requests_per_hour:
+          type: integer
+          description: API rate limit per hour
+          example: 1000
+        advanced_features_enabled:
+          type: boolean
+          description: Whether advanced features are enabled
+          example: true
+
+    BillingStatus:
+      type: object
+      required:
+        - plan_level
+        - is_subscribed
+        - cancel_at_period_end
+        - current_usage
+      properties:
+        plan_level:
+          type: string
+          description: Current plan level
+          example: pro
+        is_subscribed:
+          type: boolean
+          description: Whether user has active subscription
+          example: true
+        renews_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Subscription renewal date
+        cancel_at_period_end:
+          type: boolean
+          description: Whether subscription will cancel at period end
+          example: false
+        current_usage:
+          $ref: '#/components/schemas/UsageQuotas'
+        stripe_customer_id:
+          type: string
+          nullable: true
+          description: Stripe customer ID
+
+    PlansResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionPlan'
+
+    BillingStatusResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/BillingStatus'
+
+    SubscribeRequest:
+      type: object
+      required:
+        - plan_id
+      properties:
+        plan_id:
+          type: string
+          description: Plan ID to subscribe to
+          example: pro_monthly
+        payment_method_id:
+          type: string
+          description: Stripe payment method ID (optional)
+
+    SubscribeResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            checkout_url:
+              type: string
+              format: uri
+              description: Stripe Checkout session URL
+            session_id:
+              type: string
+              description: Session ID for tracking
+
+    CustomerPortalResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            portal_url:
+              type: string
+              format: uri
+              description: Stripe customer portal URL
+
+    PlatformReceiptRequest:
+      type: object
+      required:
+        - receipt_data
+        - product_id
+      properties:
+        receipt_data:
+          type: string
+          description: Receipt data (base64 for Apple, purchase token for Google)
+        product_id:
+          type: string
+          description: Product ID purchased
+
+    PlatformReceiptResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            is_valid:
+              type: boolean
+              description: Whether receipt is valid
+            plan_level:
+              type: string
+              description: Plan level unlocked
+            expires_at:
+              type: string
+              format: date-time
+              description: Subscription expiration date
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        error_code:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InvalidReceipt:
+      description: Receipt verification failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Invalid or expired receipt
+            error_code: INVALID_RECEIPT
+
+tags:
+  - name: Subscriptions
+    description: Subscription plan and billing management
+  - name: Platform Billing
+    description: Platform-specific receipt verification (Apple, Google, Telegram)

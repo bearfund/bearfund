@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": ["src/index.ts", "src/native.ts"],
+  "project": ["src/**/*.ts", "src/**/*.tsx"],
+  "ignore": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-utils/**"],
+  "ignoreDependencies": [
+    "react",
+    "react-native",
+    "@tanstack/react-query",
+    "axios",
+    "laravel-echo",
+    "pusher-js"
+  ],
+  "ignoreBinaries": ["tsup"]
+}

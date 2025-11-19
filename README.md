@@ -1,52 +1,335 @@
-# Open-Source React/TypeScript UI Package
+# @gamerprotocol/ui
 
-The `gamerprotocol/ui` package will serve as the single, reliable source for all UI components, API communication logic, and real-time state management. It will be published publicly on NPM under the scope `@gamerprotocol/ui`.
+Cross-platform TypeScript SDK for [GamerProtocol.io](https://gamerprotocol.io) API integration. Build gaming applications on Web, React Native (iOS/Android), Electron, and Telegram Mini Apps with a unified, type-safe interface.
 
-## 1\. Root Structure & Dependencies
+## Features
 
+- **Type-Safe** - Full TypeScript support with strict type checking and IntelliSense
+- **Platform-Agnostic** - Works identically across Web, React Native, Electron, and Telegram
+- **React Query Powered** - Automatic caching, invalidation, and refetching
+- **Real-Time Ready** - Laravel Echo integration for WebSocket game events
+- **Game Management** - Complete hooks for games, lobbies, matchmaking, and actions
+- **Billing Integration** - Subscription management with Stripe, Apple IAP, Google Play, and Telegram
+- **Authentication** - Email, social login, and token management
+- **Zero Lock-in** - Direct API client access for custom implementations
+
+## Installation
+
+```bash
+npm install @gamerprotocol/ui @tanstack/react-query axios
+# or
+yarn add @gamerprotocol/ui @tanstack/react-query axios
+# or
+pnpm add @gamerprotocol/ui @tanstack/react-query axios
 ```
-/gamerprotocol/ui
-├── /src
-│   ├── /api                     // 1. API Services & Hooks (Detailed below)
-│   ├── /components              // 2. Platform-Agnostic UI & Game Components
-│   ├── /design                  // 3. Tailwind & Theming Configuration
-│   ├── /types                   // 4. Shared Typescript Interfaces
-│   └── index.ts                 // Public export file
-├── package.json                 // "name": "@gamerprotocol/ui"
-├── tsconfig.json                // TypeScript config
-└── tailwind.config.js           // Base Tailwind Configuration
+
+### React Native
+
+```bash
+npm install @gamerprotocol/ui @tanstack/react-query axios laravel-echo pusher-js
 ```
 
-## 2\. `/api` (The Bridge to GamerProtocol.io) - Detailed Service Structure
+## Quick Start
 
-This is the most critical layer, handling two-factor authorization and data transformation. All API calls will rely on an underlying `axios` instance configured to automatically include the dynamic **Sanctum Bearer Token** and the static **`X-Interface-Key`**.
+### 1. Setup API Client
 
-| Service File | Primary Functions (Hooks & Mutators) | API Endpoints Hit | Notes on Logic |
-| :--- | :--- | :--- | :--- |
-| **`useAuthService.ts`** | `login(creds)`: POST `/v1/sessions`<br>`logout()`: DELETE `/v1/sessions`<br>`useUser()`: GET `/v1/user` | `/v1/sessions`<br>`/v1/user` | **Login is unique:** Only requires `X-Interface-Key` and returns the Bearer Token. The hook manages token storage (localStorage/SecureStorage) and state. |
-| **`useMatchService.ts`** | `useMatches()`: GET `/v1/matches`<br>`useMatch(ulid)`: GET `/v1/matches/{ulid}`<br>`createMatch(data)`: POST `/v1/matches` | `/v1/matches` | Central hook for fetching match lists and live match state. Uses **React Query** for caching and polling (or Reverb for real-time updates). |
-| **`moveMutator.ts`** | `makeMove(ulid, moveData)`: POST `/v1/matches/{ulid}/moves` | `/v1/matches/{ulid}/moves` | A dedicated mutator function (e.g., using React Query's `useMutation`) that encapsulates the call to the move endpoint. |
-| **`useReverbService.ts`** | `useGameChannel(ulid)`: Returns current game state. | N/A (WebSockets) | Manages the **Laravel Echo** connection. Subscribes to the `private-game.{ulid}` channel and updates the local state whenever a new `move.made` event is received. |
-| **`useBillingService.ts`** | `useSubscription()`: GET `/v1/billing/subscription`<br>`useQuotas()`: GET `/v1/billing/quotas` | `/v1/billing/subscription`<br>`/v1/billing/quotas` | Reads usage data. Crucial for disabling the "New Game" button when a Free user has 3 strikes or a Member is out of quota. |
+```typescript
+import { setupAPIClient, type AuthStorage } from '@gamerprotocol/ui';
 
-## 3\. `/components` (UI Components & Game Logic)
+// Web/Electron - localStorage
+const authStorage: AuthStorage = {
+  getToken: async () => localStorage.getItem('auth_token'),
+  setToken: async (token) => localStorage.setItem('auth_token', token),
+  clearToken: async () => localStorage.removeItem('auth_token'),
+};
 
-Components contain the platform-specific visual rendering logic but rely entirely on the data and state management provided by the `/api` services.
+// React Native - AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-| Component / Folder | Responsibility | Logic Dependency |
-| :--- | :--- | :--- |
-| `primitives/` | **Platform Abstraction.** Core elements like `Button`, `Text`, `Modal`. These components must internally detect the environment (Web vs. React Native) and render the appropriate DOM element (`div`, `span`) or Native Component (`View`, `Text`). | None (Pure UI) |
-| `game/GameShell.tsx` | The unified wrapper for all games. Manages the subscription to the `useReverbService` for the active `ulid`. | `useMatchService.useMatch()` |
-| `game/HeartsGame.tsx` | **Feature Component.** Renders the game board based on the parsed `game_state` JSON. Handles card selection and calls `moveMutator.makeMove()` on play. | `useReverbService` |
-| `ui/QuotaDisplay.tsx` | Renders the "3/3 Strikes Used" or "1,200/2,000 Matches Used" text. | `useBillingService.useQuotas()` |
+const authStorage: AuthStorage = {
+  getToken: async () => await AsyncStorage.getItem('auth_token'),
+  setToken: async (token) => await AsyncStorage.setItem('auth_token', token),
+  clearToken: async () => await AsyncStorage.removeItem('auth_token'),
+};
 
-## 4\. Cross-Platform Strategy
+const apiClient = setupAPIClient({
+  clientKey: process.env.GAMERPROTOCOL_CLIENT_KEY!,
+  authStorage,
+});
+```
 
-By separating platform-specific primitives from the shared logic, you maximize code reuse and minimize effort for new interfaces.
+### 2. Setup React Query
 
-| Platform | Interface Key Usage | Code Reuse (Expected) | Implementation Detail |
-| :--- | :--- | :--- | :--- |
-| **Web Interface** | Unique key for `token-games-web`. | High (80-100%) | Uses Tailwind CSS directly. |
-| **Electron App** | Unique key for `electron-desktop`. | Near-Total (95%) | Wraps the Web build; CSS/JS is fully reused. |
-| **React Native (iOS/Android)** | Unique keys for `ios-mobile` and `android-mobile`. | Moderate (50-70%) | **API and State Logic (100%):** Imports all code from the `/api` folder. **UI Components (Needs Translation):** Primitives must map to `<View>`, `<Text>`. |
-| **Telegram Mini App** | Unique key for `telegram-mini-app`. | High (80-100%) | The Telegram Mini App environment is essentially a browser, allowing direct use of the standard Web build and CSS. |
+```typescript
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+    </QueryClientProvider>
+  );
+}
+```
+
+### 3. Use Authentication Hooks
+
+```typescript
+import { useLogin, useUserQuery } from '@gamerprotocol/ui';
+
+function LoginForm() {
+  const loginMutation = useLogin(apiClient, authStorage);
+
+  const handleLogin = async () => {
+    await loginMutation.mutateAsync({
+      email: 'player@example.com',
+      password: 'securepassword',
+    });
+  };
+
+  return (
+    <button onClick={handleLogin} disabled={loginMutation.isPending}>
+      {loginMutation.isPending ? 'Logging in...' : 'Login'}
+    </button>
+  );
+}
+
+function UserProfile() {
+  const { data: user, isLoading } = useUserQuery(apiClient);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return <div>Welcome, {user?.username}!</div>;
+}
+```
+
+### 4. Use Game Hooks
+
+```typescript
+import { useGameQuery, useGameAction } from '@gamerprotocol/ui';
+
+function GameBoard({ gameUlid }: { gameUlid: string }) {
+  const { data: game } = useGameQuery(apiClient, gameUlid);
+  const gameActionMutation = useGameAction(apiClient, gameUlid);
+
+  const makeMove = async (position: number) => {
+    await gameActionMutation.mutateAsync({ position });
+  };
+
+  return (
+    <div>
+      <h2>{game?.game_title}</h2>
+      <div>State: {game?.state}</div>
+      {/* Your game board UI */}
+    </div>
+  );
+}
+```
+
+### 5. Setup Real-Time Updates (Optional)
+
+```typescript
+import { setupEcho, useRealtimeGame } from '@gamerprotocol/ui';
+
+function RealtimeGame({ gameUlid }: { gameUlid: string }) {
+  const token = await authStorage.getToken();
+  const echo = setupEcho(token!);
+
+  const { isConnected, error } = useRealtimeGame(gameUlid, { echo });
+
+  return (
+    <div>
+      {!isConnected && <div>Connecting to game...</div>}
+      {error && <div>Connection error: {error}</div>}
+      <GameBoard gameUlid={gameUlid} />
+    </div>
+  );
+}
+```
+
+## Platform-Specific Examples
+
+### Web / Electron
+
+```typescript
+import { setupAPIClient } from '@gamerprotocol/ui';
+
+const authStorage = {
+  getToken: async () => localStorage.getItem('auth_token'),
+  setToken: async (token) => localStorage.setItem('auth_token', token),
+  clearToken: async () => localStorage.removeItem('auth_token'),
+};
+
+const apiClient = setupAPIClient({
+  clientKey: process.env.GAMERPROTOCOL_CLIENT_KEY!,
+  authStorage,
+});
+```
+
+### React Native (iOS/Android)
+
+```typescript
+import { setupAPIClient } from '@gamerprotocol/ui/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const authStorage = {
+  getToken: async () => await AsyncStorage.getItem('auth_token'),
+  setToken: async (token) => await AsyncStorage.setItem('auth_token', token),
+  clearToken: async () => await AsyncStorage.removeItem('auth_token'),
+};
+
+const apiClient = setupAPIClient({
+  clientKey: process.env.GAMERPROTOCOL_CLIENT_KEY!,
+  authStorage,
+});
+```
+
+### Telegram Mini Apps
+
+```typescript
+import { setupAPIClient } from '@gamerprotocol/ui';
+
+// Telegram's cloud storage
+const authStorage = {
+  getToken: async () => {
+    return new Promise((resolve) => {
+      Telegram.WebApp.CloudStorage.getItem('auth_token', (error, value) => {
+        resolve(error ? null : value);
+      });
+    });
+  },
+  setToken: async (token) => {
+    return new Promise<void>((resolve) => {
+      Telegram.WebApp.CloudStorage.setItem('auth_token', token, () => resolve());
+    });
+  },
+  clearToken: async () => {
+    return new Promise<void>((resolve) => {
+      Telegram.WebApp.CloudStorage.removeItem('auth_token', () => resolve());
+    });
+  },
+};
+
+const apiClient = setupAPIClient({
+  clientKey: process.env.GAMERPROTOCOL_CLIENT_KEY!,
+  authStorage,
+});
+```
+
+## Available Hooks
+
+### Authentication
+
+- `useLogin(apiClient, authStorage)` - Email/password login
+- `useSocialLogin(apiClient, authStorage)` - Social OAuth login (Google, Discord, Steam)
+- `useRegister(apiClient)` - New user registration
+- `useVerifyEmail(apiClient, authStorage)` - Email verification
+- `useLogout(apiClient, authStorage)` - Logout and clear tokens
+- `useUserQuery(apiClient)` - Fetch current user profile
+- `useUpdateProfile(apiClient)` - Update user profile
+
+### Games
+
+- `useGameQuery(apiClient, ulid)` - Fetch game by ULID
+- `useGamesQuery(apiClient)` - Fetch paginated games list
+- `useGameAction(apiClient, ulid)` - Execute game action
+- `useGameOptions(apiClient, ulid)` - Get available game options
+- `useGameHistory(apiClient, ulid)` - Get game action history
+- `useForfeitGame(apiClient, ulid)` - Forfeit a game
+
+### Lobbies
+
+- `useLobbiesQuery(apiClient)` - Fetch available lobbies
+- `useLobbyQuery(apiClient, ulid)` - Fetch lobby by ULID
+- `useCreateLobby(apiClient)` - Create new lobby
+- `useJoinLobby(apiClient, ulid)` - Join a lobby
+- `useUpdateLobbyPlayer(apiClient, ulid, username)` - Update player status
+- `useRemoveLobbyPlayer(apiClient, ulid, username)` - Remove player from lobby
+- `useDeleteLobby(apiClient, ulid)` - Delete lobby
+- `useStartReadyCheck(apiClient, ulid)` - Start ready check
+
+### Matchmaking
+
+- `useJoinQuickplay(apiClient)` - Join quickplay queue
+- `useLeaveQuickplay(apiClient)` - Leave quickplay queue
+- `useAcceptQuickplay(apiClient)` - Accept quickplay match
+- `useRequestRematch(apiClient, ulid)` - Request rematch
+- `useAcceptRematch(apiClient, requestId)` - Accept rematch
+- `useDeclineRematch(apiClient, requestId)` - Decline rematch
+
+### Billing
+
+- `usePlansQuery(apiClient)` - Fetch subscription plans
+- `useSubscriptionStatus(apiClient)` - Get current subscription
+- `useQuotas(apiClient)` - Get usage quotas
+- `useSubscribe(apiClient)` - Subscribe to plan (Stripe)
+- `useCustomerPortal(apiClient)` - Open Stripe customer portal
+- `useVerifyAppleReceipt(apiClient)` - Verify Apple IAP receipt
+- `useVerifyGoogleReceipt(apiClient)` - Verify Google Play receipt
+- `useVerifyTelegramReceipt(apiClient)` - Verify Telegram Stars payment
+
+### Real-Time
+
+- `setupEcho(token, config)` - Setup Laravel Echo WebSocket client
+- `useRealtimeGame(gameUlid, options)` - Subscribe to game events
+- `useRealtimeLobby(lobbyUlid, options)` - Subscribe to lobby events
+
+## Type Definitions
+
+All TypeScript types are exported for your use:
+
+```typescript
+import type {
+  // Auth
+  User,
+  AuthStorage,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  // API
+  ApiResponse,
+  PaginatedResponse,
+  ErrorResponse,
+  // Games
+  Game,
+  GameState,
+  GameAction,
+  Lobby,
+  LobbyPlayer,
+  // Billing
+  SubscriptionPlan,
+  BillingStatus,
+  UsageQuotas,
+  // Real-time
+  GameEvent,
+  LobbyEvent,
+  ConnectionStatus,
+} from '@gamerprotocol/ui';
+```
+
+## Documentation
+
+For complete documentation, examples, and API reference, visit:
+
+- [API Documentation](https://docs.gamerprotocol.io)
+- [GitHub Repository](https://github.com/gamerprotocol/ui)
+- [Quickstart Guide](./docs/quickstart.md)
+
+## Requirements
+
+- React 19.0.0 or higher
+- TypeScript 5.0 or higher (recommended)
+- React Native 0.70.0 or higher (for native platforms)
+
+## Peer Dependencies
+
+```json
+{
+  "@tanstack/react-query": "^5.59.0",
+  "axios": "^1.7.7",
+  "laravel-echo": "^1.16.1",
+  "pusher-js": "^8.4.0-rc2"
+}
+```
