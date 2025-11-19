@@ -123,29 +123,29 @@
 
 ### Implementation for User Story 3
 
-- [ ] T054 [US3] Create src/core/hooks/useAuth.ts file
-- [ ] T055 [US3] Import setupAPIClient and get axios instance reference
-- [ ] T056 [US3] Import useQueryClient for cache operations
-- [ ] T057 [P] [US3] Implement useLogin() hook with useMutation for POST /v1/auth/login (FR-024)
-- [ ] T058 [US3] Call authStorage.setToken(response.token) in useLogin onSuccess (FR-025)
-- [ ] T059 [US3] Invalidate ['user'] query in useLogin onSuccess (FR-026)
-- [ ] T060 [P] [US3] Implement useSocialLogin() hook with useMutation for POST /v1/auth/social (FR-027)
-- [ ] T061 [US3] Call authStorage.setToken(response.token) in useSocialLogin onSuccess (FR-028)
-- [ ] T062 [P] [US3] Implement useRegister() hook with useMutation for POST /v1/auth/register (FR-029)
-- [ ] T063 [P] [US3] Implement useVerifyEmail() hook with useMutation for POST /v1/auth/verify (FR-030)
-- [ ] T064 [US3] Call authStorage.setToken(response.token) in useVerifyEmail onSuccess (FR-031)
-- [ ] T065 [P] [US3] Implement useLogout() hook with useMutation for POST /v1/auth/logout (FR-032)
-- [ ] T066 [US3] Call authStorage.clearToken() in useLogout onSuccess (FR-033)
-- [ ] T067 [US3] Call queryClient.clear() in useLogout onSuccess to reset all cache (FR-034)
-- [ ] T068 [P] [US3] Implement useUserQuery() hook with useQuery for GET /v1/auth/user with key ['user'] (FR-035)
-- [ ] T069 [P] [US3] Implement useUpdateProfile() hook with useMutation for PATCH /v1/auth/user (FR-036)
-- [ ] T070 [US3] Invalidate ['user'] query in useUpdateProfile onSuccess (FR-037)
-- [ ] T071 [US3] Ensure all auth hooks return typed ErrorResponse on failure (FR-038)
-- [ ] T072 [US3] Verify all hooks expose isLoading, isError, error states (FR-039)
-- [ ] T073 [US3] Add JSDoc comments to all auth hooks
-- [ ] T074 [US3] Create src/core/hooks/index.ts exporting all hooks
-- [ ] T075 [US3] Export hooks from src/core/index.ts
-- [ ] T076 [US3] Verify auth hooks complete operations within 500ms of API response (SC-004)
+- [x] T054 [US3] Create src/core/hooks/useAuth.ts file
+- [x] T055 [US3] Import setupAPIClient and get axios instance reference
+- [x] T056 [US3] Import useQueryClient for cache operations
+- [x] T057 [P] [US3] Implement useLogin() hook with useMutation for POST /v1/auth/login (FR-024)
+- [x] T058 [US3] Call authStorage.setToken(response.token) in useLogin onSuccess (FR-025)
+- [x] T059 [US3] Invalidate ['user'] query in useLogin onSuccess (FR-026)
+- [x] T060 [P] [US3] Implement useSocialLogin() hook with useMutation for POST /v1/auth/social (FR-027)
+- [x] T061 [US3] Call authStorage.setToken(response.token) in useSocialLogin onSuccess (FR-028)
+- [x] T062 [P] [US3] Implement useRegister() hook with useMutation for POST /v1/auth/register (FR-029)
+- [x] T063 [P] [US3] Implement useVerifyEmail() hook with useMutation for POST /v1/auth/verify (FR-030)
+- [x] T064 [US3] Call authStorage.setToken(response.token) in useVerifyEmail onSuccess (FR-031)
+- [x] T065 [P] [US3] Implement useLogout() hook with useMutation for POST /v1/auth/logout (FR-032)
+- [x] T066 [US3] Call authStorage.clearToken() in useLogout onSuccess (FR-033)
+- [x] T067 [US3] Call queryClient.clear() in useLogout onSuccess to reset all cache (FR-034)
+- [x] T068 [P] [US3] Implement useUserQuery() hook with useQuery for GET /v1/auth/user with key ['user'] (FR-035)
+- [x] T069 [P] [US3] Implement useUpdateProfile() hook with useMutation for PATCH /v1/auth/user (FR-036)
+- [x] T070 [US3] Invalidate ['user'] query in useUpdateProfile onSuccess (FR-037)
+- [x] T071 [US3] Ensure all auth hooks return typed ErrorResponse on failure (FR-038)
+- [x] T072 [US3] Verify all hooks expose isLoading, isError, error states (FR-039)
+- [x] T073 [US3] Add JSDoc comments to all auth hooks
+- [x] T074 [US3] Create src/core/hooks/index.ts exporting all hooks
+- [x] T075 [US3] Export hooks from src/core/index.ts
+- [x] T076 [US3] Verify auth hooks complete operations within 500ms of API response (SC-004)
 
 **Checkpoint**: Authentication complete. Users can log in, register, and manage profiles.
 
@@ -311,6 +311,7 @@
 ### Critical Path (MVP)
 
 For MVP, implement in this order:
+
 1. **Phase 1**: Setup (T001-T007)
 2. **Phase 2**: Foundational (T008-T013)
 3. **Phase 3**: User Story 1 - Types (T014-T034) ← Foundation for everything
@@ -322,43 +323,53 @@ For MVP, implement in this order:
 ### Post-MVP Priorities
 
 After MVP, add features by priority:
+
 - **P2 Stories**: US4 (Game Hooks) + US5 (Billing Hooks) - can be done in parallel
 - **P3 Story**: US6 (Real-time) - enhancement layer on top of game hooks
 
 ### Parallel Opportunities
 
 **Within Setup (Phase 1)**:
+
 - All tasks T002-T007 can run in parallel after T001
 
 **Within Foundational (Phase 2)**:
+
 - T008-T009 can run in parallel
 - T010-T013 can run in parallel after T008-T009
 
 **Within User Story 1 (Types)**:
+
 - T014-T031 (all type files) can run in parallel
 - T032 (index.ts) depends on T014-T031
 - T033-T034 (docs/validation) can run in parallel after T032
 
 **Within User Story 2 (API Client)**:
+
 - Sequential by nature (building one client)
 
 **Within User Story 3 (Auth Hooks)**:
+
 - T057, T060, T062, T063, T065, T068, T069 (hook definitions) can run in parallel
 - Cache invalidation tasks depend on their respective hook tasks
 
 **Within User Story 4 (Game Hooks)**:
+
 - T078-T102 (hook definitions) can run in parallel
 - T103-T107 (validation/docs) run after hooks complete
 
 **Within User Story 5 (Billing Hooks)**:
+
 - T109-T119 (hook definitions) can run in parallel
 - T121-T123 (validation/docs) run after hooks complete
 
 **Within User Story 6 (Real-time)**:
+
 - T124-T130 (setupEcho) and T131-T138 (useRealtimeGame) and T139-T145 (useRealtimeLobby) can run in parallel
 - T146-T151 (error handling/docs) run after core implementation
 
 **Within Polish (Phase 9)**:
+
 - T152-T161 (all documentation/export tasks) can run in parallel
 - T162-T167 (review/testing) run sequentially at end
 
@@ -413,12 +424,15 @@ git checkout -b feature/us1-realtime-types
 ### Post-MVP Increments
 
 **Increment 2**: Add game management (P2)
+
 - Phase 6 (User Story 4 - Game Hooks) - 5 days
 
 **Increment 3**: Add billing (P2)
+
 - Phase 7 (User Story 5 - Billing Hooks) - 3 days
 
 **Increment 4**: Add real-time (P3)
+
 - Phase 8 (User Story 6 - Real-time) - 4 days
 
 **Final Polish**: Phase 9 remaining tasks - 2 days
@@ -438,7 +452,7 @@ git checkout -b feature/us1-realtime-types
 ✅ File paths specified for all implementation tasks  
 ✅ All 78 functional requirements mapped to tasks  
 ✅ Constitution compliance built into tasks (strict mode, JSDoc, platform-agnostic)  
-✅ Success criteria validation tasks included  
+✅ Success criteria validation tasks included
 
 ---
 
@@ -449,6 +463,7 @@ git checkout -b feature/us1-realtime-types
 **Post-MVP Tasks**: T077-T167 (91 tasks)
 
 **Task Distribution**:
+
 - Setup: 7 tasks
 - Foundational: 6 tasks (BLOCKS all stories)
 - User Story 1 (Types): 21 tasks
