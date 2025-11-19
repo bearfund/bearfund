@@ -23,7 +23,13 @@ pnpm add @gamerprotocol/ui
 The package requires React and React Query as peer dependencies:
 
 ```bash
-npm install react@^18.0.0 @tanstack/react-query@^5.59.0
+npm install react@^19.0.0 @tanstack/react-query@^5.59.0 axios@^1.7.7
+```
+
+For real-time features, also install:
+
+```bash
+npm install laravel-echo@^1.16.1 pusher-js@^8.4.0-rc2
 ```
 
 ---
@@ -72,9 +78,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Setup API client
-setupAPIClient({
-  baseURL: 'https://api.gamerprotocol.io/v1',
+// Setup API client (returns the configured client)
+const apiClient = setupAPIClient({
   clientKey: process.env.REACT_APP_CLIENT_KEY!,
   authStorage: webAuthStorage,
 });
@@ -82,7 +87,7 @@ setupAPIClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Your app */}
+      {/* Your app - pass apiClient to components that need it */}
     </QueryClientProvider>
   );
 }
@@ -93,14 +98,20 @@ function App() {
 ```typescript
 // src/components/LoginForm.tsx
 import { useLogin } from '@gamerprotocol/ui';
+import type { APIClient } from '@gamerprotocol/ui';
+import { webAuthStorage } from '../lib/auth-storage';
 
-export function LoginForm() {
-  const { mutate: login, isPending, error } = useLogin();
+interface LoginFormProps {
+  apiClient: APIClient;
+}
+
+export function LoginForm({ apiClient }: LoginFormProps) {
+  const { mutate: login, isPending, error } = useLogin(apiClient, webAuthStorage);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     login({
       email: formData.get('email') as string,
       password: formData.get('password') as string,
@@ -129,7 +140,7 @@ import { webAuthStorage } from './auth-storage';
 
 export async function initializeEcho() {
   const token = await webAuthStorage.getToken();
-  
+
   if (!token) {
     throw new Error('No auth token available');
   }
@@ -182,9 +193,8 @@ import { nativeAuthStorage } from './src/lib/auth-storage.native';
 
 const queryClient = new QueryClient();
 
-// Setup API client
-setupAPIClient({
-  baseURL: 'https://api.gamerprotocol.io/v1',
+// Setup API client (returns the configured client)
+const apiClient = setupAPIClient({
   clientKey: process.env.EXPO_PUBLIC_CLIENT_KEY!,
   authStorage: nativeAuthStorage,
 });
@@ -192,7 +202,7 @@ setupAPIClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Your app */}
+      {/* Your app - pass apiClient to screens that need it */}
     </QueryClientProvider>
   );
 }
@@ -205,11 +215,17 @@ export default function App() {
 import { useState } from 'react';
 import { View, TextInput, Button, Text } from 'react-native';
 import { useLogin } from '@gamerprotocol/ui/native';
+import type { APIClient } from '@gamerprotocol/ui/native';
+import { nativeAuthStorage } from '../lib/auth-storage.native';
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  apiClient: APIClient;
+}
+
+export function LoginScreen({ apiClient }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { mutate: login, isPending, error } = useLogin();
+  const { mutate: login, isPending, error } = useLogin(apiClient, nativeAuthStorage);
 
   const handleLogin = () => {
     login({ email, password });
@@ -266,8 +282,7 @@ export const electronAuthStorage: AuthStorage = {
 import { setupAPIClient } from '@gamerprotocol/ui';
 import { electronAuthStorage } from './lib/auth-storage.electron';
 
-setupAPIClient({
-  baseURL: 'https://api.gamerprotocol.io/v1',
+const apiClient = setupAPIClient({
   clientKey: process.env.CLIENT_KEY!,
   authStorage: electronAuthStorage,
 });
@@ -305,7 +320,7 @@ export const telegramAuthStorage: AuthStorage = {
       });
     });
   },
-  
+
   setToken: async (token: string) => {
     return new Promise((resolve, reject) => {
       WebApp.CloudStorage.setItem('auth_token', token, (error: any) => {
@@ -314,7 +329,7 @@ export const telegramAuthStorage: AuthStorage = {
       });
     });
   },
-  
+
   clearToken: async () => {
     return new Promise((resolve, reject) => {
       WebApp.CloudStorage.removeItem('auth_token', (error: any) => {
@@ -332,8 +347,7 @@ export const telegramAuthStorage: AuthStorage = {
 import { setupAPIClient } from '@gamerprotocol/ui';
 import { telegramAuthStorage } from './lib/auth-storage.telegram';
 
-setupAPIClient({
-  baseURL: 'https://api.gamerprotocol.io/v1',
+const apiClient = setupAPIClient({
   clientKey: process.env.CLIENT_KEY!,
   authStorage: telegramAuthStorage,
 });
@@ -346,22 +360,32 @@ setupAPIClient({
 ### Authentication Flow
 
 ```typescript
-import { useLogin, useLogout, useAuthUser } from '@gamerprotocol/ui';
+import { useLogin, useLogout, useUserQuery } from '@gamerprotocol/ui';
+import type { APIClient, AuthStorage } from '@gamerprotocol/ui';
 
-function AuthExample() {
-  const { mutate: login } = useLogin();
-  const { mutate: logout } = useLogout();
-  const { data: user, isLoading } = useAuthUser();
+interface AuthExampleProps {
+  apiClient: APIClient;
+  authStorage: AuthStorage;
+}
+
+function AuthExample({ apiClient, authStorage }: AuthExampleProps) {
+  const { mutate: login } = useLogin(apiClient, authStorage);
+  const { mutate: logout } = useLogout(apiClient, authStorage);
+  const { data: user, isLoading } = useUserQuery(apiClient);
 
   if (isLoading) return <div>Loading...</div>;
-  
+
   if (!user) {
-    return <button onClick={() => login({ email: '...', password: '...' })}>Login</button>;
+    return (
+      <button onClick={() => login({ email: '...', password: '...' })}>
+        Login
+      </button>
+    );
   }
 
   return (
     <div>
-      <p>Welcome, {user.name}</p>
+      <p>Welcome, {user.username}</p>
       <button onClick={() => logout()}>Logout</button>
     </div>
   );
@@ -371,10 +395,15 @@ function AuthExample() {
 ### Game Management
 
 ```typescript
-import { useGames, useGame, useGameAction } from '@gamerprotocol/ui';
+import { useGamesQuery, useGameQuery, useGameAction } from '@gamerprotocol/ui';
+import type { APIClient } from '@gamerprotocol/ui';
 
-function GamesList() {
-  const { data, isLoading } = useGames({ status: 'active' });
+interface GamesListProps {
+  apiClient: APIClient;
+}
+
+function GamesList({ apiClient }: GamesListProps) {
+  const { data, isLoading } = useGamesQuery(apiClient, { status: 'active' });
 
   if (isLoading) return <div>Loading games...</div>;
 
@@ -387,9 +416,14 @@ function GamesList() {
   );
 }
 
-function GameBoard({ gameUlid }: { gameUlid: string }) {
-  const { data: game } = useGame(gameUlid);
-  const { mutate: executeAction } = useGameAction(gameUlid);
+interface GameBoardProps {
+  apiClient: APIClient;
+  gameUlid: string;
+}
+
+function GameBoard({ apiClient, gameUlid }: GameBoardProps) {
+  const { data: game } = useGameQuery(apiClient, gameUlid);
+  const { mutate: executeAction } = useGameAction(apiClient, gameUlid);
 
   const handleMove = (column: number) => {
     executeAction({
@@ -400,7 +434,7 @@ function GameBoard({ gameUlid }: { gameUlid: string }) {
 
   return (
     <div>
-      <h1>Game: {game?.data.game_title}</h1>
+      <h1>Game: {game?.game_title}</h1>
       {/* Render game board */}
       <button onClick={() => handleMove(0)}>Drop in column 0</button>
     </div>
@@ -411,17 +445,25 @@ function GameBoard({ gameUlid }: { gameUlid: string }) {
 ### Real-time Updates
 
 ```typescript
-import { useRealtimeGame } from '@gamerprotocol/ui';
+import { setupEcho, useRealtimeGame, useGameQuery } from '@gamerprotocol/ui';
+import type { APIClient } from '@gamerprotocol/ui';
 
-function GameWithRealtime({ gameUlid }: { gameUlid: string }) {
-  const { data: game } = useGame(gameUlid);
-  const { isConnected } = useRealtimeGame(gameUlid, { enabled: true });
+interface GameWithRealtimeProps {
+  apiClient: APIClient;
+  gameUlid: string;
+  authToken: string;
+}
+
+function GameWithRealtime({ apiClient, gameUlid, authToken }: GameWithRealtimeProps) {
+  const echo = setupEcho(authToken);
+  const { data: game } = useGameQuery(apiClient, gameUlid);
+  const { isConnected } = useRealtimeGame(gameUlid, { echo });
 
   return (
     <div>
       <div>Connection: {isConnected ? '🟢 Live' : '🔴 Offline'}</div>
       {/* Game renders automatically update when WebSocket events invalidate cache */}
-      <pre>{JSON.stringify(game?.data.game_state, null, 2)}</pre>
+      <pre>{JSON.stringify(game?.game_state, null, 2)}</pre>
     </div>
   );
 }
@@ -430,24 +472,29 @@ function GameWithRealtime({ gameUlid }: { gameUlid: string }) {
 ### Lobby Management
 
 ```typescript
-import { useLobbies, useCreateLobby, useJoinLobby } from '@gamerprotocol/ui';
+import { useLobbiesQuery, useCreateLobby, useJoinLobby } from '@gamerprotocol/ui';
+import type { APIClient } from '@gamerprotocol/ui';
 
-function LobbyBrowser() {
-  const { data: lobbies } = useLobbies({ game_title: 'validate-four' });
-  const { mutate: createLobby } = useCreateLobby();
-  const { mutate: joinLobby } = useJoinLobby();
+interface LobbyBrowserProps {
+  apiClient: APIClient;
+}
+
+function LobbyBrowser({ apiClient }: LobbyBrowserProps) {
+  const { data: lobbies } = useLobbiesQuery(apiClient, { game_title: 'validate-four' });
+  const { mutate: createLobby } = useCreateLobby(apiClient);
+  const { mutate: joinLobby } = useJoinLobby(apiClient);
 
   return (
     <div>
       <button onClick={() => createLobby({ game_title: 'validate-four' })}>
         Create Lobby
       </button>
-      
+
       <ul>
         {lobbies?.data.map((lobby) => (
           <li key={lobby.ulid}>
             {lobby.game_title} - {lobby.players.length}/{lobby.max_players}
-            <button onClick={() => joinLobby(lobby.ulid)}>Join</button>
+            <button onClick={() => joinLobby({ lobby_ulid: lobby.ulid })}>Join</button>
           </li>
         ))}
       </ul>
@@ -459,17 +506,22 @@ function LobbyBrowser() {
 ### Billing & Subscriptions
 
 ```typescript
-import { useBillingStatus, useSubscriptionPlans, useSubscribe } from '@gamerprotocol/ui';
+import { useBillingStatusQuery, usePlansQuery, useSubscribe } from '@gamerprotocol/ui';
+import type { APIClient } from '@gamerprotocol/ui';
 
-function SubscriptionManager() {
-  const { data: status } = useBillingStatus();
-  const { data: plans } = useSubscriptionPlans();
-  const { mutate: subscribe } = useSubscribe();
+interface SubscriptionManagerProps {
+  apiClient: APIClient;
+}
+
+function SubscriptionManager({ apiClient }: SubscriptionManagerProps) {
+  const { data: status } = useBillingStatusQuery(apiClient);
+  const { data: plans } = usePlansQuery(apiClient);
+  const { mutate: subscribe } = useSubscribe(apiClient);
 
   return (
     <div>
-      <p>Current Plan: {status?.data.plan_level}</p>
-      
+      <p>Current Plan: {status?.plan_level}</p>
+
       <h2>Available Plans</h2>
       {plans?.data.map((plan) => (
         <div key={plan.id}>
