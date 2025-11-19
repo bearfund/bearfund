@@ -107,14 +107,15 @@ export interface EchoConfig {
 export function setupEcho(token: string, config?: EchoConfig): Echo<'pusher'> {
   // Determine default host (web: current hostname, native: must be provided)
   const defaultHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const actualHost = config?.host ?? defaultHost;
 
   const echoConfig = {
     broadcaster: 'pusher' as const,
     key: config?.appKey ?? 'gamerprotocol-app-key',
-    wsHost: config?.host ?? defaultHost,
+    wsHost: actualHost,
     wsPort: config?.wsPort ?? 6001,
     wssPort: config?.wsPort ?? 6001,
-    forceTLS: config?.forceTLS ?? defaultHost !== 'localhost',
+    forceTLS: config?.forceTLS ?? actualHost !== 'localhost',
     enabledTransports: ['ws', 'wss'],
     disableStats: true,
     authEndpoint: config?.authEndpoint ?? '/broadcasting/auth',

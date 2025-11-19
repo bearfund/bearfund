@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
 
     // Test file patterns
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
@@ -23,12 +23,12 @@ export default defineConfig({
         'src/native.ts',
         'src/types/**', // Types don't need coverage
       ],
-      // Thresholds (adjusted for current test coverage - will increase as we add hook tests)
+      // Thresholds (adjusted for current test coverage)
       thresholds: {
-        statements: 13,
-        branches: 35,
-        functions: 5,
-        lines: 13,
+        statements: 39,
+        branches: 85,
+        functions: 17,
+        lines: 39,
       },
     },
 
