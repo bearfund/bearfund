@@ -1,9 +1,9 @@
 /**
  * Game-related type definitions
- * 
+ *
  * Types for game management, game states, actions, history, and lobbies.
  * Platform-agnostic types that work across all supported platforms.
- * 
+ *
  * @packageDocumentation
  */
 
@@ -15,7 +15,7 @@ export type LobbyState = 'open' | 'in-progress' | 'completed' | 'cancelled';
 
 /**
  * Core game resource structure.
- * 
+ *
  * Represents a single game instance with all metadata.
  */
 export interface Game {
@@ -52,7 +52,7 @@ export interface Game {
 
 /**
  * Game action/move structure.
- * 
+ *
  * Represents a single player action within a game.
  */
 export interface GameAction {
@@ -77,7 +77,7 @@ export interface GameAction {
 
 /**
  * Game history entry structure.
- * 
+ *
  * Represents a complete game record with final state.
  */
 export interface GameHistory {
@@ -111,7 +111,7 @@ export interface GameHistory {
 
 /**
  * Game lobby structure.
- * 
+ *
  * Represents a multiplayer game lobby where players can join before game starts.
  */
 export interface Lobby {

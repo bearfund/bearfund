@@ -1,9 +1,9 @@
 /**
  * @gamerprotocol/ui/native
- * 
+ *
  * Entry point for React Native (iOS/Android) platforms.
  * Exports the same API as the main entry point for consistent usage across platforms.
- * 
+ *
  * @packageDocumentation
  */
 

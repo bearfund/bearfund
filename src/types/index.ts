@@ -1,8 +1,8 @@
 /**
  * Type definitions barrel file
- * 
+ *
  * Re-exports all type definitions for convenient importing.
- * 
+ *
  * @packageDocumentation
  */
 

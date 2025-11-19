@@ -2,7 +2,7 @@
  * Core barrel file
  *
  * Re-exports all platform-agnostic core functionality including
- * API client, authentication hooks, and utilities.
+ * API client, authentication hooks, game hooks, and billing hooks.
  *
  * @packageDocumentation
  */
@@ -25,4 +25,44 @@ export {
   useUpdateProfile,
 } from './hooks';
 
-// TODO: Export game hooks, billing hooks, realtime utilities
+/**
+ * Game Management Hooks
+ */
+export {
+  useGameQuery,
+  useGamesQuery,
+  useGameOptions,
+  useGameHistory,
+  useGameAction,
+  useForfeitGame,
+  useLobbiesQuery,
+  useLobbyQuery,
+  useCreateLobby,
+  useJoinLobby,
+  useUpdateLobbyPlayer,
+  useRemoveLobbyPlayer,
+  useDeleteLobby,
+  useStartReadyCheck,
+  useJoinQuickplay,
+  useLeaveQuickplay,
+  useAcceptQuickplay,
+  useRequestRematch,
+  useAcceptRematch,
+  useDeclineRematch,
+} from './hooks';
+
+/**
+ * Billing & Subscription Hooks
+ */
+export {
+  usePlansQuery,
+  useSubscriptionStatus,
+  useQuotas,
+  useSubscribe,
+  useCustomerPortal,
+  useVerifyAppleReceipt,
+  useVerifyGoogleReceipt,
+  useVerifyTelegramReceipt,
+} from './hooks';
+
+// TODO: Export realtime utilities

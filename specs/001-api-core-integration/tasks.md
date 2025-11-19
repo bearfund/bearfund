@@ -159,37 +159,37 @@
 
 ### Implementation for User Story 4
 
-- [ ] T077 [US4] Create src/core/hooks/useGame.ts file
-- [ ] T078 [P] [US4] Implement useGameQuery(ulid) hook with useQuery for GET /v1/games/{gameUlid} with key ['game', ulid] (FR-040)
-- [ ] T079 [P] [US4] Implement useGamesQuery() hook with useQuery for GET /v1/games returning paginated list (FR-041)
-- [ ] T080 [P] [US4] Implement useGameAction(ulid) hook with useMutation for POST /v1/games/{gameUlid}/action (FR-042)
-- [ ] T081 [US4] Invalidate ['game', ulid] query in useGameAction onSuccess (FR-043)
-- [ ] T082 [P] [US4] Implement useGameOptions(ulid) hook with useQuery for GET /v1/games/{gameUlid}/options (FR-044)
-- [ ] T083 [P] [US4] Implement useGameHistory(ulid) hook with useQuery for GET /v1/games/{gameUlid}/history
-- [ ] T084 [P] [US4] Implement useForfeitGame(ulid) hook with useMutation for POST /v1/games/{gameUlid}/forfeit (FR-045)
-- [ ] T085 [US4] Invalidate ['game', ulid] query in useForfeitGame onSuccess (FR-046)
-- [ ] T086 [P] [US4] Implement useLobbiesQuery() hook with useQuery for GET /v1/games/lobbies with key ['lobbies'] (FR-047)
-- [ ] T087 [P] [US4] Implement useLobbyQuery(ulid) hook with useQuery for GET /v1/games/lobbies/{lobby_ulid} with key ['lobby', ulid] (FR-048)
-- [ ] T088 [P] [US4] Implement useCreateLobby() hook with useMutation for POST /v1/games/lobbies (FR-049)
-- [ ] T089 [US4] Invalidate ['lobbies'] query in useCreateLobby onSuccess (FR-050)
-- [ ] T090 [P] [US4] Implement useJoinLobby(ulid) hook with useMutation for POST /v1/games/lobbies/{lobby_ulid}/players
-- [ ] T091 [US4] Invalidate ['lobby', ulid] and ['lobbies'] in useJoinLobby onSuccess
-- [ ] T092 [P] [US4] Implement useUpdateLobbyPlayer(ulid) hook with useMutation for PUT /v1/games/lobbies/{lobby_ulid}/players/{username}
-- [ ] T093 [US4] Invalidate ['lobby', ulid] in useUpdateLobbyPlayer onSuccess
-- [ ] T094 [P] [US4] Implement useRemoveLobbyPlayer(ulid) hook with useMutation for DELETE /v1/games/lobbies/{lobby_ulid}/players/{username}
-- [ ] T095 [P] [US4] Implement useStartReadyCheck(ulid) hook with useMutation for POST /v1/games/lobbies/{lobby_ulid}/ready-check
-- [ ] T096 [P] [US4] Implement useDeleteLobby(ulid) hook with useMutation for DELETE /v1/games/lobbies/{lobby_ulid}
-- [ ] T097 [P] [US4] Implement useJoinQuickplay() hook with useMutation for POST /v1/games/quickplay (FR-051)
-- [ ] T098 [P] [US4] Implement useLeaveQuickplay() hook with useMutation for DELETE /v1/games/quickplay (FR-052)
-- [ ] T099 [P] [US4] Implement useAcceptQuickplay() hook with useMutation for POST /v1/games/quickplay/accept (FR-053)
-- [ ] T100 [P] [US4] Implement useRequestRematch(ulid) hook with useMutation for POST /v1/games/{gameUlid}/rematch
-- [ ] T101 [P] [US4] Implement useAcceptRematch(requestId) hook with useMutation for POST /v1/games/rematch/{requestId}/accept
-- [ ] T102 [P] [US4] Implement useDeclineRematch(requestId) hook with useMutation for POST /v1/games/rematch/{requestId}/decline
-- [ ] T103 [US4] Disable refetchInterval on all game queries (rely on WebSocket) (FR-054)
-- [ ] T104 [US4] Ensure all game hooks return typed responses matching API contracts (FR-055)
-- [ ] T105 [US4] Add JSDoc comments to all game hooks
-- [ ] T106 [US4] Export game hooks from src/core/hooks/index.ts
-- [ ] T107 [US4] Verify game action mutations invalidate cache within 200ms (SC-005)
+- [x] T077 [US4] Create src/core/hooks/useGame.ts file
+- [x] T078 [P] [US4] Implement useGameQuery(ulid) hook with useQuery for GET /v1/games/{gameUlid} with key ['game', ulid] (FR-040)
+- [x] T079 [P] [US4] Implement useGamesQuery() hook with useQuery for GET /v1/games returning paginated list (FR-041)
+- [x] T080 [P] [US4] Implement useGameAction(ulid) hook with useMutation for POST /v1/games/{gameUlid}/action (FR-042)
+- [x] T081 [US4] Invalidate ['game', ulid] query in useGameAction onSuccess (FR-043)
+- [x] T082 [P] [US4] Implement useGameOptions(ulid) hook with useQuery for GET /v1/games/{gameUlid}/options (FR-044)
+- [x] T083 [P] [US4] Implement useGameHistory(ulid) hook with useQuery for GET /v1/games/{gameUlid}/history
+- [x] T084 [P] [US4] Implement useForfeitGame(ulid) hook with useMutation for POST /v1/games/{gameUlid}/forfeit (FR-045)
+- [x] T085 [US4] Invalidate ['game', ulid] query in useForfeitGame onSuccess (FR-046)
+- [x] T086 [P] [US4] Implement useLobbiesQuery() hook with useQuery for GET /v1/games/lobbies with key ['lobbies'] (FR-047)
+- [x] T087 [P] [US4] Implement useLobbyQuery(ulid) hook with useQuery for GET /v1/games/lobbies/{lobby_ulid} with key ['lobby', ulid] (FR-048)
+- [x] T088 [P] [US4] Implement useCreateLobby() hook with useMutation for POST /v1/games/lobbies (FR-049)
+- [x] T089 [US4] Invalidate ['lobbies'] query in useCreateLobby onSuccess (FR-050)
+- [x] T090 [P] [US4] Implement useJoinLobby(ulid) hook with useMutation for POST /v1/games/lobbies/{lobby_ulid}/players
+- [x] T091 [US4] Invalidate ['lobby', ulid] and ['lobbies'] in useJoinLobby onSuccess
+- [x] T092 [P] [US4] Implement useUpdateLobbyPlayer(ulid) hook with useMutation for PUT /v1/games/lobbies/{lobby_ulid}/players/{username}
+- [x] T093 [US4] Invalidate ['lobby', ulid] in useUpdateLobbyPlayer onSuccess
+- [x] T094 [P] [US4] Implement useRemoveLobbyPlayer(ulid) hook with useMutation for DELETE /v1/games/lobbies/{lobby_ulid}/players/{username}
+- [x] T095 [P] [US4] Implement useStartReadyCheck(ulid) hook with useMutation for POST /v1/games/lobbies/{lobby_ulid}/ready-check
+- [x] T096 [P] [US4] Implement useDeleteLobby(ulid) hook with useMutation for DELETE /v1/games/lobbies/{lobby_ulid}
+- [x] T097 [P] [US4] Implement useJoinQuickplay() hook with useMutation for POST /v1/games/quickplay (FR-051)
+- [x] T098 [P] [US4] Implement useLeaveQuickplay() hook with useMutation for DELETE /v1/games/quickplay (FR-052)
+- [x] T099 [P] [US4] Implement useAcceptQuickplay() hook with useMutation for POST /v1/games/quickplay/accept (FR-053)
+- [x] T100 [P] [US4] Implement useRequestRematch(ulid) hook with useMutation for POST /v1/games/{gameUlid}/rematch
+- [x] T101 [P] [US4] Implement useAcceptRematch(requestId) hook with useMutation for POST /v1/games/rematch/{requestId}/accept
+- [x] T102 [P] [US4] Implement useDeclineRematch(requestId) hook with useMutation for POST /v1/games/rematch/{requestId}/decline
+- [x] T103 [US4] Disable refetchInterval on all game queries (rely on WebSocket) (FR-054)
+- [x] T104 [US4] Ensure all game hooks return typed responses matching API contracts (FR-055)
+- [x] T105 [US4] Add JSDoc comments to all game hooks
+- [x] T106 [US4] Export game hooks from src/core/hooks/index.ts
+- [x] T107 [US4] Verify game action mutations invalidate cache within 200ms (SC-005)
 
 **Checkpoint**: Game management complete. Users can play games, join lobbies, use matchmaking.
 
@@ -203,22 +203,22 @@
 
 ### Implementation for User Story 5
 
-- [ ] T108 [US5] Create src/core/hooks/useBilling.ts file
-- [ ] T109 [P] [US5] Implement usePlansQuery() hook with useQuery for GET /v1/billing/plans with key ['billing', 'plans'] (FR-056)
-- [ ] T110 [P] [US5] Implement useSubscriptionStatus() hook with useQuery for GET /v1/billing/status with key ['billing', 'status'] (FR-057)
-- [ ] T111 [P] [US5] Implement useQuotas() hook returning current_usage from billing status query (FR-058)
-- [ ] T112 [P] [US5] Implement useSubscribe() hook with useMutation for POST /v1/billing/subscribe (FR-059)
-- [ ] T113 [US5] Invalidate ['billing', 'status'] in useSubscribe onSuccess
-- [ ] T114 [P] [US5] Implement useCustomerPortal() hook with useMutation for GET /v1/billing/manage
-- [ ] T115 [P] [US5] Implement useVerifyAppleReceipt() hook with useMutation for POST /v1/billing/apple/verify (FR-060)
-- [ ] T116 [US5] Invalidate ['billing', 'status'] in useVerifyAppleReceipt onSuccess
-- [ ] T117 [P] [US5] Implement useVerifyGoogleReceipt() hook with useMutation for POST /v1/billing/google/verify (FR-061)
-- [ ] T118 [US5] Invalidate ['billing', 'status'] in useVerifyGoogleReceipt onSuccess
-- [ ] T119 [P] [US5] Implement useVerifyTelegramReceipt() hook with useMutation for POST /v1/billing/telegram/verify (FR-062)
-- [ ] T120 [US5] Invalidate ['billing', 'status'] in useVerifyTelegramReceipt onSuccess
-- [ ] T121 [US5] Ensure all billing hooks use appropriate query keys (FR-063)
-- [ ] T122 [US5] Add JSDoc comments to all billing hooks
-- [ ] T123 [US5] Export billing hooks from src/core/hooks/index.ts
+- [x] T108 [US5] Create src/core/hooks/useBilling.ts file
+- [x] T109 [P] [US5] Implement usePlansQuery() hook with useQuery for GET /v1/billing/plans with key ['billing', 'plans'] (FR-056)
+- [x] T110 [P] [US5] Implement useSubscriptionStatus() hook with useQuery for GET /v1/billing/status with key ['billing', 'status'] (FR-057)
+- [x] T111 [P] [US5] Implement useQuotas() hook returning current_usage from billing status query (FR-058)
+- [x] T112 [P] [US5] Implement useSubscribe() hook with useMutation for POST /v1/billing/subscribe (FR-059)
+- [x] T113 [US5] Invalidate ['billing', 'status'] in useSubscribe onSuccess
+- [x] T114 [P] [US5] Implement useCustomerPortal() hook with useMutation for GET /v1/billing/manage
+- [x] T115 [P] [US5] Implement useVerifyAppleReceipt() hook with useMutation for POST /v1/billing/apple/verify (FR-060)
+- [x] T116 [US5] Invalidate ['billing', 'status'] in useVerifyAppleReceipt onSuccess
+- [x] T117 [P] [US5] Implement useVerifyGoogleReceipt() hook with useMutation for POST /v1/billing/google/verify (FR-061)
+- [x] T118 [US5] Invalidate ['billing', 'status'] in useVerifyGoogleReceipt onSuccess
+- [x] T119 [P] [US5] Implement useVerifyTelegramReceipt() hook with useMutation for POST /v1/billing/telegram/verify (FR-062)
+- [x] T120 [US5] Invalidate ['billing', 'status'] in useVerifyTelegramReceipt onSuccess
+- [x] T121 [US5] Ensure all billing hooks use appropriate query keys (FR-063)
+- [x] T122 [US5] Add JSDoc comments to all billing hooks
+- [x] T123 [US5] Export billing hooks from src/core/hooks/index.ts
 
 **Checkpoint**: Billing complete. Subscriptions work across Stripe, Apple, Google, Telegram platforms.
 

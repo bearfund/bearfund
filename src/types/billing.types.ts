@@ -1,9 +1,9 @@
 /**
  * Billing and subscription type definitions
- * 
+ *
  * Types for subscription management, billing status, and usage tracking.
  * Platform-agnostic types that work across all supported platforms.
- * 
+ *
  * @packageDocumentation
  */
 
@@ -15,7 +15,7 @@ export type SubscriptionTier = 'free' | 'starter' | 'professional' | 'enterprise
 
 /**
  * Subscription plan structure.
- * 
+ *
  * Represents a subscription tier with pricing and limits.
  */
 export interface SubscriptionPlan {
@@ -46,7 +46,7 @@ export interface SubscriptionPlan {
 
 /**
  * Usage quotas structure.
- * 
+ *
  * Defines resource limits for a subscription plan or current usage.
  */
 export interface UsageQuotas {
@@ -71,7 +71,7 @@ export interface UsageQuotas {
 
 /**
  * User subscription structure.
- * 
+ *
  * Represents the current subscription for a user.
  */
 export interface UserSubscription {

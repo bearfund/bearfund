@@ -1,8 +1,8 @@
 /**
  * @gamerprotocol/ui
- * 
+ *
  * Main entry point for web and Electron platforms.
- * 
+ *
  * @packageDocumentation
  */
 

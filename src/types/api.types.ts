@@ -1,19 +1,19 @@
 /**
  * API foundation type definitions
- * 
+ *
  * Core types for API communication, response wrapping, pagination, and error handling.
  * These types are platform-agnostic and work identically across all supported platforms.
- * 
+ *
  * @packageDocumentation
  */
 
 /**
  * Standard API response wrapper for single resources.
- * 
+ *
  * Most API endpoints return data wrapped in this structure.
- * 
+ *
  * @template T - The type of the data payload
- * 
+ *
  * @example
  * ```typescript
  * // GET /v1/games/{ulid} returns ApiResponse<Game>
@@ -81,11 +81,11 @@ export interface PaginationLinks {
 
 /**
  * Paginated API response wrapper for collections.
- * 
+ *
  * Used by list endpoints that support pagination.
- * 
+ *
  * @template T - The type of items in the collection
- * 
+ *
  * @example
  * ```typescript
  * // GET /v1/games returns PaginatedResponse<Game>
@@ -106,9 +106,9 @@ export interface PaginatedResponse<T> {
 
 /**
  * Standard error response structure.
- * 
+ *
  * All API errors are transformed to this shape by the error interceptor.
- * 
+ *
  * @example 422 Validation Error
  * ```typescript
  * const error: ErrorResponse = {
@@ -120,7 +120,7 @@ export interface PaginatedResponse<T> {
  *   }
  * };
  * ```
- * 
+ *
  * @example 401 Unauthorized
  * ```typescript
  * const error: ErrorResponse = {
@@ -128,7 +128,7 @@ export interface PaginatedResponse<T> {
  *   error_code: 'UNAUTHORIZED'
  * };
  * ```
- * 
+ *
  * @example Network Error (transformed by interceptor)
  * ```typescript
  * const error: ErrorResponse = {

@@ -1,9 +1,9 @@
 /**
  * Real-time event type definitions
- * 
+ *
  * Types for WebSocket events via Laravel Echo and Pusher.
  * Platform-agnostic types that work across all supported platforms.
- * 
+ *
  * @packageDocumentation
  */
 
@@ -26,7 +26,7 @@ export type RealtimeEventType =
 
 /**
  * Base event structure for all real-time events.
- * 
+ *
  * @template T - The event payload type
  */
 export interface BaseEvent<T> {
@@ -213,7 +213,7 @@ export type RealtimeEvent =
 
 /**
  * Echo channel subscription options.
- * 
+ *
  * Configuration for Laravel Echo channel subscriptions.
  */
 export interface ChannelOptions {

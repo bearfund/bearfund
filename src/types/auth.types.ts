@@ -1,17 +1,17 @@
 /**
  * Authentication type definitions
- * 
+ *
  * Platform-agnostic interfaces for authentication operations.
  * All types are designed to work identically across Web, React Native, Electron, and Telegram Mini Apps.
- * 
+ *
  * @packageDocumentation
  */
 
 /**
  * Platform-agnostic interface for authentication token storage.
- * 
+ *
  * Implementations must be provided by consuming applications based on their platform:
- * 
+ *
  * @example Web Implementation (localStorage)
  * ```typescript
  * const webAuthStorage: AuthStorage = {
@@ -20,11 +20,11 @@
  *   clearToken: async () => localStorage.removeItem('auth_token'),
  * };
  * ```
- * 
+ *
  * @example React Native Implementation (SecureStore)
  * ```typescript
  * import * as SecureStore from 'expo-secure-store';
- * 
+ *
  * const nativeAuthStorage: AuthStorage = {
  *   getToken: async () => await SecureStore.getItemAsync('auth_token'),
  *   setToken: async (token) => await SecureStore.setItemAsync('auth_token', token),
@@ -75,7 +75,7 @@ export interface User {
 
 /**
  * Authentication response returned by login/register endpoints.
- * 
+ *
  * Note: This is NOT wrapped in ApiResponse<T> - it's a flat structure
  * returned directly from /v1/auth/login and /v1/auth/social endpoints.
  */

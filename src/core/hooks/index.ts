@@ -22,4 +22,47 @@ export {
   useUpdateProfile,
 } from './useAuth';
 
-// TODO: Will export useGames, useBilling, etc.
+/**
+ * Game Management Hooks
+ *
+ * React Query hooks for game operations, lobbies, matchmaking, and rematch.
+ * All query hooks disable automatic refetching - use real-time hooks for live updates.
+ */
+export {
+  useGameQuery,
+  useGamesQuery,
+  useGameOptions,
+  useGameHistory,
+  useGameAction,
+  useForfeitGame,
+  useLobbiesQuery,
+  useLobbyQuery,
+  useCreateLobby,
+  useJoinLobby,
+  useUpdateLobbyPlayer,
+  useRemoveLobbyPlayer,
+  useDeleteLobby,
+  useStartReadyCheck,
+  useJoinQuickplay,
+  useLeaveQuickplay,
+  useAcceptQuickplay,
+  useRequestRematch,
+  useAcceptRematch,
+  useDeclineRematch,
+} from './useGame';
+
+/**
+ * Billing & Subscription Hooks
+ *
+ * React Query hooks for subscription management and platform-specific billing.
+ */
+export {
+  usePlansQuery,
+  useSubscriptionStatus,
+  useQuotas,
+  useSubscribe,
+  useCustomerPortal,
+  useVerifyAppleReceipt,
+  useVerifyGoogleReceipt,
+  useVerifyTelegramReceipt,
+} from './useBilling';
