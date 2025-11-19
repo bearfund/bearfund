@@ -84,3 +84,14 @@ export type {
   RealtimeEvent,
   ChannelOptions,
 } from './realtime.types';
+
+// Platform types
+export type { ApiStatus } from './platform.types';
+
+// Account types
+export type {
+  AccountStats,
+  AccountLevel,
+  AccountAlert,
+  MarkAlertsReadRequest,
+} from './account.types';
