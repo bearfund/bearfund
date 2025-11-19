@@ -232,33 +232,33 @@
 
 ### Implementation for User Story 6
 
-- [ ] T124 [US6] Create src/core/realtime/echo-client.ts file
-- [ ] T125 [US6] Implement setupEcho(token, options?) function (FR-064)
-- [ ] T126 [US6] Configure Laravel Echo with pusher broadcaster for Reverb compatibility (FR-065)
-- [ ] T127 [US6] Use provided token for private channel authorization in Echo config (FR-066)
-- [ ] T128 [US6] Accept optional host and authEndpoint in options parameter (FR-067)
-- [ ] T129 [US6] Set default wsHost, wsPort, forceTLS, disableStats per research.md decisions
-- [ ] T130 [US6] Export setupEcho from src/core/realtime/index.ts
-- [ ] T131 [US6] Create src/core/realtime/useRealtimeGame.ts file
-- [ ] T132 [US6] Implement useRealtimeGame(ulid, options?) hook (FR-068)
-- [ ] T133 [US6] Subscribe to private-game.{ulid} channel when enabled (FR-069)
-- [ ] T134 [US6] Listen for GameActionProcessed, GameCompleted, GameForfeited events (FR-070)
-- [ ] T135 [US6] Call queryClient.invalidateQueries(['game', ulid]) when events received (FR-071)
-- [ ] T136 [US6] Implement useEffect cleanup to call echo.leave() on unmount (FR-072)
-- [ ] T137 [US6] Return isConnected status and error state from hook (FR-073)
-- [ ] T138 [US6] Accept enabled boolean in options to control subscription (FR-078)
-- [ ] T139 [US6] Create src/core/realtime/useRealtimeLobby.ts file
-- [ ] T140 [US6] Implement useRealtimeLobby(ulid, options?) hook (FR-074)
-- [ ] T141 [US6] Subscribe to private-lobby.{ulid} channel when enabled (FR-075)
-- [ ] T142 [US6] Listen for PlayerJoined, PlayerLeft, PlayerStatusChanged, ReadyCheckStarted, LobbyStarting, LobbyCancelled events (FR-076)
-- [ ] T143 [US6] Invalidate ['lobbies'] and ['lobby', ulid] queries when events received (FR-077)
-- [ ] T144 [US6] Implement useEffect cleanup for lobby channel subscription
-- [ ] T145 [US6] Return isConnected and error state from useRealtimeLobby
-- [ ] T146 [US6] Add connection state change handlers for error tracking
-- [ ] T147 [US6] Add authentication error handling (4001 error code)
-- [ ] T148 [US6] Add JSDoc comments to setupEcho and real-time hooks
-- [ ] T149 [US6] Export real-time hooks from src/core/realtime/index.ts
-- [ ] T150 [US6] Export realtime utilities from src/core/index.ts
+- [x] T124 [US6] Create src/core/realtime/echo-client.ts file
+- [x] T125 [US6] Implement setupEcho(token, options?) function (FR-064)
+- [x] T126 [US6] Configure Laravel Echo with pusher broadcaster for Reverb compatibility (FR-065)
+- [x] T127 [US6] Use provided token for private channel authorization in Echo config (FR-066)
+- [x] T128 [US6] Accept optional host and authEndpoint in options parameter (FR-067)
+- [x] T129 [US6] Set default wsHost, wsPort, forceTLS, disableStats per research.md decisions
+- [x] T130 [US6] Export setupEcho from src/core/realtime/index.ts
+- [x] T131 [US6] Create src/core/realtime/useRealtimeGame.ts file
+- [x] T132 [US6] Implement useRealtimeGame(ulid, options?) hook (FR-068)
+- [x] T133 [US6] Subscribe to private-game.{ulid} channel when enabled (FR-069)
+- [x] T134 [US6] Listen for GameActionProcessed, GameCompleted, GameForfeited events (FR-070)
+- [x] T135 [US6] Call queryClient.invalidateQueries(['game', ulid]) when events received (FR-071)
+- [x] T136 [US6] Implement useEffect cleanup to call echo.leave() on unmount (FR-072)
+- [x] T137 [US6] Return isConnected status and error state from hook (FR-073)
+- [x] T138 [US6] Accept enabled boolean in options to control subscription (FR-078)
+- [x] T139 [US6] Create src/core/realtime/useRealtimeLobby.ts file
+- [x] T140 [US6] Implement useRealtimeLobby(ulid, options?) hook (FR-074)
+- [x] T141 [US6] Subscribe to private-lobby.{ulid} channel when enabled (FR-075)
+- [x] T142 [US6] Listen for PlayerJoined, PlayerLeft, PlayerStatusChanged, ReadyCheckStarted, LobbyStarting, LobbyCancelled events (FR-076)
+- [x] T143 [US6] Invalidate ['lobbies'] and ['lobby', ulid] queries when events received (FR-077)
+- [x] T144 [US6] Implement useEffect cleanup for lobby channel subscription
+- [x] T145 [US6] Return isConnected and error state from useRealtimeLobby
+- [x] T146 [US6] Add connection state change handlers for error tracking
+- [x] T147 [US6] Add authentication error handling (4001 error code)
+- [x] T148 [US6] Add JSDoc comments to setupEcho and real-time hooks
+- [x] T149 [US6] Export real-time hooks from src/core/realtime/index.ts
+- [x] T150 [US6] Export realtime utilities from src/core/index.ts
 - [ ] T151 [US6] Verify WebSocket events invalidate queries within 100ms (SC-006)
 
 **Checkpoint**: Real-time complete. Games and lobbies update live via WebSocket events.

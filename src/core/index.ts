@@ -65,4 +65,9 @@ export {
   useVerifyTelegramReceipt,
 } from './hooks';
 
-// TODO: Export realtime utilities
+/**
+ * Real-time WebSocket Integration
+ */
+export { setupEcho, useRealtimeGame, useRealtimeLobby } from './realtime';
+
+export type { EchoConfig, UseRealtimeGameOptions, UseRealtimeLobbyOptions } from './realtime';
