@@ -80,7 +80,7 @@
     "@types/react-native": "^0.73.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",
-    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/coverage-v8": "^4.0.13",
     "@vitest/ui": "^4.0.10",
     "axios-mock-adapter": "^2.1.0",
     "eslint": "^8.57.1",
