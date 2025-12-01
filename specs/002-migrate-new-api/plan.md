@@ -1,13 +1,13 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Migrate to New API Structure
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `002-migrate-new-api` | **Date**: 2025-12-01 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/002-migrate-new-api/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+The goal is to migrate the codebase to the new v1 API structure defined in `/docs/api.md`, replacing the legacy implementation based on `/docs/old-api.md`. This involves updating the API client configuration to include the `X-Client-Key` header, refactoring TypeScript types to match the new JSON response envelopes (including pagination), and updating React Query hooks for Authentication, Matchmaking, and Games to use the new endpoints and real-time channels (`private-user.{username}`, `private-game.{ulid}`). Backwards compatibility is not required.
 
 ## Technical Context
 
@@ -63,7 +63,6 @@ src/
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+| --------- | ---------- | ------------------------------------ |
+| None      | N/A        | N/A                                  |
