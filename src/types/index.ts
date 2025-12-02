@@ -29,6 +29,20 @@ export type {
   MarkAlertsReadRequest,
 } from './auth.types';
 
+// System types
+export type {
+  SystemHealth,
+  SystemTime,
+  SystemConfig,
+  FeedbackType,
+  SubmitFeedbackRequest,
+  FeedbackResponse,
+  GameTitle,
+  GameLibraryResponse,
+  GameRules,
+  GameEntities,
+} from './system.types';
+
 // API types
 export type {
   ApiResponse,

@@ -24,6 +24,22 @@ export {
 } from './useAccount';
 
 /**
+ * System & Library Hooks
+ *
+ * React Query hooks for system health, configuration, feedback, and game library.
+ */
+export {
+  useHealthQuery,
+  useTimeQuery,
+  useConfigQuery,
+  useSubmitFeedback,
+  useLibraryQuery,
+  useGameTitleQuery,
+  useGameRulesQuery,
+  useGameEntitiesQuery,
+} from './useSystem';
+
+/**
  * Game Management Hooks
  *
  * React Query hooks for game operations, lobbies, matchmaking, and rematch.

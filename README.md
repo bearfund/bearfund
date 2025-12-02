@@ -237,6 +237,17 @@ const apiClient = setupAPIClient({
 - `useAlertsQuery(apiClient, options)` - Get user notifications (paginated)
 - `useMarkAlertsRead(apiClient)` - Mark alerts as read
 
+### System & Library
+
+- `useHealthQuery(apiClient, options)` - Check API health and status
+- `useTimeQuery(apiClient, options)` - Get server time for synchronization
+- `useConfigQuery(apiClient, options)` - Fetch platform configuration
+- `useSubmitFeedback(apiClient)` - Submit bug reports or feature requests
+- `useLibraryQuery(apiClient, options)` - Get game catalog
+- `useGameTitleQuery(apiClient, gameTitle, options)` - Get game details
+- `useGameRulesQuery(apiClient, gameTitle, options)` - Get game rules documentation
+- `useGameEntitiesQuery(apiClient, gameTitle, options)` - Get game entities and schemas
+
 ### Games
 
 - `useGameQuery(apiClient, ulid)` - Fetch game by ULID
@@ -307,6 +318,17 @@ import type {
   AlertType,
   AlertsResponse,
   MarkAlertsReadRequest,
+  // System & Library
+  SystemHealth,
+  SystemTime,
+  SystemConfig,
+  FeedbackType,
+  SubmitFeedbackRequest,
+  FeedbackResponse,
+  GameTitle,
+  GameLibraryResponse,
+  GameRules,
+  GameEntities,
   // API
   ApiResponse,
   PaginatedResponse,
