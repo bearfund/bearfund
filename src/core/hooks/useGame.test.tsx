@@ -9,29 +9,24 @@ import {
   useGameAction,
   useForfeitGame,
   useGameOptions,
-  useGameHistory,
   useLobbiesQuery,
   useLobbyQuery,
   useCreateLobby,
   useJoinLobby,
-  useUpdateLobbyPlayer,
   useRemoveLobbyPlayer,
   useDeleteLobby,
   useStartReadyCheck,
   useJoinQuickplay,
   useLeaveQuickplay,
-  useAcceptQuickplay,
   useRequestRematch,
   useAcceptRematch,
   useDeclineRematch,
 } from './useGame';
 import type {
   Game,
-  GameHistory,
   Lobby,
   SubmitActionRequest,
   CreateLobbyRequest,
-  UpdateLobbyRequest,
   PaginatedResponse,
   ErrorResponse,
 } from '../../types';
@@ -60,51 +55,62 @@ describe('useGame hooks', () => {
 
   const mockGame: Game = {
     ulid: '01HQ5X9K3G2YM4N6P7Q8R9S0T1',
-    game_title: 'validate-four',
-    state: 'active',
-    metadata: {
-      current_turn: 'player1',
+    title: 'Connect Four',
+    mode: 'Standard',
+    status: 'active',
+    current_turn: '01J3PLY1',
+    players: [
+      {
+        ulid: '01J3PLY1',
+        user_id: 1,
+        username: 'player1',
+        color: 'red',
+        is_current_turn: true,
+        is_winner: false,
+      },
+      {
+        ulid: '01J3PLY2',
+        user_id: 2,
+        username: 'player2',
+        color: 'yellow',
+        is_current_turn: false,
+        is_winner: false,
+      },
+    ],
+    state: {
       board: [
         [0, 0],
         [0, 0],
       ],
     },
-    player_count: 2,
-    winner_username: null,
-    started_at: '2024-01-01T00:00:00Z',
-    completed_at: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-  };
-
-  const mockGameHistory: GameHistory = {
-    ulid: '01HQ5X9K3G2YM4N6P7Q8R9S0T1',
-    game_title: 'validate-four',
-    state: 'completed',
-    metadata: {
-      final_board: [
-        [1, 2],
-        [2, 1],
-      ],
-    },
-    player_count: 2,
-    winner_username: 'player1',
-    started_at: '2024-01-01T00:00:00Z',
-    completed_at: '2024-01-01T01:00:00Z',
-    created_at: '2024-01-01T00:00:00Z',
   };
 
   const mockLobby: Lobby = {
     ulid: '01HQ5XABCDEFGHIJK123456789',
+    host: {
+      id: 1,
+      username: 'player1',
+    },
     game_title: 'validate-four',
-    state: 'open',
-    max_players: 2,
-    current_players: 1,
-    host_username: 'player1',
-    settings: {},
-    game_ulid: null,
+    mode: {
+      id: 1,
+      slug: 'standard',
+      name: 'Standard',
+    },
+    is_public: true,
+    min_players: 2,
+    status: 'pending',
+    players: [
+      {
+        user_id: 1,
+        username: 'player1',
+        status: 'accepted',
+        source: 'host',
+      },
+    ],
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
   };
 
   const mockPaginationLinks = {
@@ -116,7 +122,7 @@ describe('useGame hooks', () => {
 
   describe('useGameQuery', () => {
     test('fetches game successfully', async () => {
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, mockGame);
+      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, { data: mockGame });
 
       const { result } = renderHook(() => useGameQuery(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -127,8 +133,8 @@ describe('useGame hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toEqual(mockGame);
-      expect(result.current.data?.state).toBe('active');
-      expect(result.current.data?.player_count).toBe(2);
+      expect(result.current.data?.status).toBe('active');
+      expect(result.current.data?.players).toHaveLength(2);
     });
 
     test('handles 404 for non-existent game', async () => {
@@ -165,7 +171,7 @@ describe('useGame hooks', () => {
     });
 
     test('uses correct query key for caching', async () => {
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, mockGame);
+      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, { data: mockGame });
 
       const { result: result1 } = renderHook(
         () => useGameQuery(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'),
@@ -308,8 +314,8 @@ describe('useGame hooks', () => {
 
   describe('useGameAction', () => {
     test('submits action successfully', async () => {
-      const updatedGame = { ...mockGame, metadata: { current_turn: 'player2' } };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/action').reply(200, updatedGame);
+      const updatedGame = { ...mockGame, current_turn: '01J3PLY2' };
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/actions').reply(200, { data: updatedGame });
 
       const { result } = renderHook(() => useGameAction(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -318,21 +324,21 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action_type: 'place_piece',
-        payload: { column: 3 },
+        action: 'place_piece',
+        parameters: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data).toEqual(updatedGame);
+      expect(result.current.data?.data).toEqual(updatedGame);
       expect(mock.history.post[0].data).toBe(JSON.stringify(actionRequest));
     });
 
     test('invalidates game query on success', async () => {
-      const updatedGame = { ...mockGame, metadata: { current_turn: 'player2' } };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/action').reply(200, updatedGame);
+      const updatedGame = { ...mockGame, current_turn: '01J3PLY2' };
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/actions').reply(200, { data: updatedGame });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -343,8 +349,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action_type: 'place_piece',
-        payload: { column: 3 },
+        action: 'place_piece',
+        parameters: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
@@ -361,7 +367,7 @@ describe('useGame hooks', () => {
         message: 'Invalid action',
         errors: { action_type: ['Action not allowed in current state'] },
       };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/action').reply(400, errorResponse);
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/actions').reply(400, errorResponse);
 
       const { result } = renderHook(() => useGameAction(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -370,8 +376,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action_type: 'invalid_action',
-        payload: {},
+        action: 'invalid_action',
+        parameters: {},
       };
 
       result.current.mutate(actionRequest);
@@ -386,7 +392,7 @@ describe('useGame hooks', () => {
         message: 'Not your turn',
         errors: undefined,
       };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/action').reply(403, errorResponse);
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/actions').reply(403, errorResponse);
 
       const { result } = renderHook(() => useGameAction(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -395,8 +401,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action_type: 'place_piece',
-        payload: { column: 3 },
+        action: 'place_piece',
+        parameters: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
@@ -411,10 +417,9 @@ describe('useGame hooks', () => {
     test('forfeits game successfully', async () => {
       const forfeitedGame = {
         ...mockGame,
-        state: 'completed' as const,
-        winner_username: 'player2',
+        status: 'completed' as const,
       };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/forfeit').reply(200, forfeitedGame);
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, { data: forfeitedGame });
 
       const { result } = renderHook(() => useForfeitGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -426,13 +431,12 @@ describe('useGame hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.state).toBe('completed');
-      expect(result.current.data?.winner_username).toBe('player2');
+      expect(result.current.data?.data.status).toBe('completed');
     });
 
     test('invalidates game query on forfeit', async () => {
-      const forfeitedGame = { ...mockGame, state: 'completed' as const };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/forfeit').reply(200, forfeitedGame);
+      const forfeitedGame = { ...mockGame, status: 'completed' as const };
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, { data: forfeitedGame });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -456,7 +460,7 @@ describe('useGame hooks', () => {
         message: 'Game already completed',
         errors: undefined,
       };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/forfeit').reply(400, errorResponse);
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(400, errorResponse);
 
       const { result } = renderHook(() => useForfeitGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -478,7 +482,7 @@ describe('useGame hooks', () => {
         valid_actions: ['place_piece', 'forfeit'],
         valid_columns: [0, 1, 2, 3, 4, 5, 6],
       };
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/options').reply(200, mockOptions);
+      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/options').reply(200, { data: mockOptions });
 
       const { result } = renderHook(() => useGameOptions(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
@@ -507,45 +511,6 @@ describe('useGame hooks', () => {
     });
   });
 
-  describe('useGameHistory', () => {
-    test('fetches game history successfully', async () => {
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/history').reply(200, mockGameHistory);
-
-      const { result } = renderHook(() => useGameHistory(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(mockGameHistory);
-      expect(result.current.data?.state).toBe('completed');
-      expect(result.current.data?.winner_username).toBe('player1');
-    });
-
-    test('handles empty history for new game', async () => {
-      const emptyHistory: GameHistory = {
-        ...mockGameHistory,
-        state: 'active',
-        winner_username: null,
-        completed_at: null,
-      };
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/history').reply(200, emptyHistory);
-
-      const { result } = renderHook(() => useGameHistory(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data?.winner_username).toBeNull();
-      expect(result.current.data?.completed_at).toBeNull();
-    });
-  });
-
   describe('useLobbiesQuery', () => {
     test('fetches lobbies list successfully', async () => {
       const mockResponse: PaginatedResponse<Lobby> = {
@@ -558,10 +523,10 @@ describe('useGame hooks', () => {
           per_page: 10,
           total: 1,
           last_page: 1,
-          path: '/games/lobbies',
+          path: '/matchmaking/lobbies',
         },
       };
-      mock.onGet('/games/lobbies').reply(200, mockResponse);
+      mock.onGet('/matchmaking/lobbies').reply(200, mockResponse);
 
       const { result } = renderHook(() => useLobbiesQuery(apiClient), {
         wrapper: ({ children }) => (
@@ -586,11 +551,11 @@ describe('useGame hooks', () => {
           per_page: 10,
           total: 1,
           last_page: 1,
-          path: '/games/lobbies',
+          path: '/matchmaking/lobbies',
         },
       };
       mock
-        .onGet('/games/lobbies', { params: { game_title: 'validate-four' } })
+        .onGet('/matchmaking/lobbies', { params: { game_title: 'validate-four' } })
         .reply(200, mockResponse);
 
       const { result } = renderHook(
@@ -610,7 +575,7 @@ describe('useGame hooks', () => {
 
   describe('useLobbyQuery', () => {
     test('fetches lobby successfully', async () => {
-      mock.onGet('/games/lobbies/01HQ5XABCDEFGHIJK123456789').reply(200, mockLobby);
+      mock.onGet('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789').reply(200, { data: mockLobby });
 
       const { result } = renderHook(() => useLobbyQuery(apiClient, '01HQ5XABCDEFGHIJK123456789'), {
         wrapper: ({ children }) => (
@@ -621,7 +586,7 @@ describe('useGame hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toEqual(mockLobby);
-      expect(result.current.data?.current_players).toBe(1);
+      expect(result.current.data?.players).toHaveLength(1);
     });
 
     test('can be disabled via options', () => {
@@ -642,7 +607,7 @@ describe('useGame hooks', () => {
 
   describe('useCreateLobby', () => {
     test('creates lobby successfully', async () => {
-      mock.onPost('/games/lobbies').reply(200, mockLobby);
+      mock.onPost('/matchmaking/lobbies').reply(200, { data: mockLobby });
 
       const { result } = renderHook(() => useCreateLobby(apiClient), {
         wrapper: ({ children }) => (
@@ -652,19 +617,20 @@ describe('useGame hooks', () => {
 
       const createRequest: CreateLobbyRequest = {
         game_title: 'validate-four',
-        max_players: 2,
-        settings: {},
+        mode: 'standard',
+        is_public: true,
+        min_players: 2,
       };
 
       result.current.mutate(createRequest);
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data).toEqual(mockLobby);
+      expect(result.current.data?.data).toEqual(mockLobby);
     });
 
     test('invalidates lobbies query on create', async () => {
-      mock.onPost('/games/lobbies').reply(200, mockLobby);
+      mock.onPost('/matchmaking/lobbies').reply(200, { data: mockLobby });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -676,8 +642,9 @@ describe('useGame hooks', () => {
 
       const createRequest: CreateLobbyRequest = {
         game_title: 'validate-four',
-        max_players: 2,
-        settings: {},
+        mode: 'standard',
+        is_public: true,
+        min_players: 2,
       };
 
       result.current.mutate(createRequest);
@@ -692,33 +659,43 @@ describe('useGame hooks', () => {
     test('joins lobby successfully', async () => {
       const updatedLobby = {
         ...mockLobby,
-        current_players: 2,
+        players: [...mockLobby.players, { username: 'player2', is_ready: false }],
       };
-      mock.onPost('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players').reply(200, updatedLobby);
+      mock
+        .onPut('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789/players/player2')
+        .reply(200, { data: updatedLobby });
 
-      const { result } = renderHook(() => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
-      });
+      const { result } = renderHook(
+        () => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player2'),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
 
       result.current.mutate();
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.current_players).toBe(2);
+      expect(result.current.data?.data.players).toHaveLength(2);
     });
 
     test('invalidates lobby and lobbies queries on join', async () => {
-      mock.onPost('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players').reply(200, mockLobby);
+      mock
+        .onPut('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789/players/player2')
+        .reply(200, { data: mockLobby });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      const { result } = renderHook(() => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
-      });
+      const { result } = renderHook(
+        () => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player2'),
+        {
+          wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          ),
+        }
+      );
 
       result.current.mutate();
 
@@ -731,37 +708,9 @@ describe('useGame hooks', () => {
     });
   });
 
-  describe('useUpdateLobbyPlayer', () => {
-    test('updates player status successfully', async () => {
-      const updatedLobby = { ...mockLobby };
-      mock
-        .onPut('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players/player1')
-        .reply(200, updatedLobby);
-
-      const { result } = renderHook(
-        () => useUpdateLobbyPlayer(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player1'),
-        {
-          wrapper: ({ children }) => (
-            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-          ),
-        }
-      );
-
-      const updateRequest: UpdateLobbyRequest = {
-        settings: { ready: true },
-      };
-
-      result.current.mutate(updateRequest);
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(updatedLobby);
-    });
-  });
-
   describe('useRemoveLobbyPlayer', () => {
     test('removes player successfully', async () => {
-      mock.onDelete('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players/player2').reply(204);
+      mock.onDelete('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789/players/player2').reply(204);
 
       const { result } = renderHook(
         () => useRemoveLobbyPlayer(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player2'),
@@ -780,7 +729,7 @@ describe('useGame hooks', () => {
 
   describe('useDeleteLobby', () => {
     test('deletes lobby successfully', async () => {
-      mock.onDelete('/games/lobbies/01HQ5XABCDEFGHIJK123456789').reply(204);
+      mock.onDelete('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789').reply(204);
 
       const { result } = renderHook(() => useDeleteLobby(apiClient, '01HQ5XABCDEFGHIJK123456789'), {
         wrapper: ({ children }) => (
@@ -796,8 +745,10 @@ describe('useGame hooks', () => {
 
   describe('useStartReadyCheck', () => {
     test('starts ready check successfully', async () => {
-      const mockResponse = { message: 'Ready check started' };
-      mock.onPost('/games/lobbies/01HQ5XABCDEFGHIJK123456789/ready-check').reply(200, mockResponse);
+      const mockResponse = { data: { message: 'Ready check started' } };
+      mock
+        .onPost('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789/ready-check')
+        .reply(200, mockResponse);
 
       const { result } = renderHook(
         () => useStartReadyCheck(apiClient, '01HQ5XABCDEFGHIJK123456789'),
@@ -812,14 +763,14 @@ describe('useGame hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.message).toBe('Ready check started');
+      expect(result.current.data?.data.message).toBe('Ready check started');
     });
   });
 
   describe('useJoinQuickplay', () => {
     test('joins quickplay queue successfully', async () => {
-      const mockResponse = { message: 'Joined quickplay queue' };
-      mock.onPost('/games/quickplay').reply(200, mockResponse);
+      const mockResponse = { data: { message: 'Joined quickplay queue' } };
+      mock.onPost('/matchmaking/queue').reply(200, mockResponse);
 
       const { result } = renderHook(() => useJoinQuickplay(apiClient), {
         wrapper: ({ children }) => (
@@ -827,19 +778,19 @@ describe('useGame hooks', () => {
         ),
       });
 
-      result.current.mutate({ game_title: 'validate-four', game_mode: 'standard' });
+      result.current.mutate({ game_title: 'validate-four', mode: 'standard' });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.message).toBe('Joined quickplay queue');
+      expect(result.current.data?.data.message).toBe('Joined quickplay queue');
     });
   });
 
   describe('useLeaveQuickplay', () => {
     test('leaves quickplay queue successfully', async () => {
-      mock.onDelete('/games/quickplay').reply(204);
+      mock.onDelete('/matchmaking/queue/01HQ5XQUEUE123456789ABC').reply(204);
 
-      const { result } = renderHook(() => useLeaveQuickplay(apiClient), {
+      const { result } = renderHook(() => useLeaveQuickplay(apiClient, '01HQ5XQUEUE123456789ABC'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),
@@ -851,29 +802,10 @@ describe('useGame hooks', () => {
     });
   });
 
-  describe('useAcceptQuickplay', () => {
-    test('accepts quickplay match successfully', async () => {
-      const mockResponse = { message: 'Match accepted' };
-      mock.onPost('/games/quickplay/accept').reply(200, mockResponse);
-
-      const { result } = renderHook(() => useAcceptQuickplay(apiClient), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
-      });
-
-      result.current.mutate({ match_id: 'match_123' });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data?.message).toBe('Match accepted');
-    });
-  });
-
   describe('useRequestRematch', () => {
     test('requests rematch successfully', async () => {
-      const mockResponse = { request_id: 'rematch_123', message: 'Rematch requested' };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/rematch').reply(200, mockResponse);
+      const mockResponse = { data: { ulid: 'proposal_123', message: 'Rematch requested' } };
+      mock.onPost('/matchmaking/proposals').reply(200, mockResponse);
 
       const { result } = renderHook(
         () => useRequestRematch(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'),
@@ -884,21 +816,21 @@ describe('useGame hooks', () => {
         }
       );
 
-      result.current.mutate();
+      result.current.mutate({});
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.message).toBe('Rematch requested');
-      expect(result.current.data?.request_id).toBe('rematch_123');
+      expect(result.current.data?.data.message).toBe('Rematch requested');
+      expect(result.current.data?.data.ulid).toBe('proposal_123');
     });
   });
 
   describe('useAcceptRematch', () => {
     test('accepts rematch successfully', async () => {
-      const newGame = { ...mockGame, ulid: '01HQ5XNEWGAME123456789ABC' };
-      mock.onPost('/games/rematch/rematch_123/accept').reply(200, newGame);
+      const mockResponse = { data: { message: 'Rematch accepted' } };
+      mock.onPost('/matchmaking/proposals/proposal_123/accept').reply(200, mockResponse);
 
-      const { result } = renderHook(() => useAcceptRematch(apiClient, 'rematch_123'), {
+      const { result } = renderHook(() => useAcceptRematch(apiClient, 'proposal_123'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),
@@ -908,16 +840,16 @@ describe('useGame hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.ulid).toBe('01HQ5XNEWGAME123456789ABC');
+      expect(result.current.data?.data.message).toBe('Rematch accepted');
     });
   });
 
   describe('useDeclineRematch', () => {
     test('declines rematch successfully', async () => {
-      const mockResponse = { message: 'Rematch declined' };
-      mock.onPost('/games/rematch/rematch_123/decline').reply(200, mockResponse);
+      const mockResponse = { data: { message: 'Rematch declined' } };
+      mock.onPost('/matchmaking/proposals/proposal_123/decline').reply(200, mockResponse);
 
-      const { result } = renderHook(() => useDeclineRematch(apiClient, 'rematch_123'), {
+      const { result } = renderHook(() => useDeclineRematch(apiClient, 'proposal_123'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),
@@ -927,15 +859,15 @@ describe('useGame hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.message).toBe('Rematch declined');
+      expect(result.current.data?.data.message).toBe('Rematch declined');
     });
   });
 
   describe('integration tests', () => {
     test('complete game flow: fetch → action → verify cache invalidation', async () => {
-      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, mockGame);
-      const updatedGame = { ...mockGame, metadata: { current_turn: 'player2' } };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/action').reply(200, updatedGame);
+      mock.onGet('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1').reply(200, { data: mockGame });
+      const updatedGame = { ...mockGame, current_turn: '01J3PLY2' };
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/actions').reply(200, { data: updatedGame });
 
       const { result: gameResult } = renderHook(
         () => useGameQuery(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'),
@@ -947,7 +879,7 @@ describe('useGame hooks', () => {
       );
 
       await waitFor(() => expect(gameResult.current.isSuccess).toBe(true));
-      expect(gameResult.current.data?.metadata.current_turn).toBe('player1');
+      expect(gameResult.current.data?.current_turn).toBe('01J3PLY1');
 
       const { result: actionResult } = renderHook(
         () => useGameAction(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'),
@@ -959,21 +891,22 @@ describe('useGame hooks', () => {
       );
 
       const actionRequest: SubmitActionRequest = {
-        action_type: 'place_piece',
-        payload: { column: 3 },
+        action: 'place_piece',
+        parameters: { column: 3 },
       };
 
       actionResult.current.mutate(actionRequest);
 
       await waitFor(() => expect(actionResult.current.isSuccess).toBe(true));
-      expect(actionResult.current.data?.metadata.current_turn).toBe('player2');
+      expect(actionResult.current.data?.data.current_turn).toBe('01J3PLY2');
     });
 
-    test('lobby flow: create → join → update → delete', async () => {
-      mock.onPost('/games/lobbies').reply(200, mockLobby);
-      mock.onPost('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players').reply(200, mockLobby);
-      mock.onPut('/games/lobbies/01HQ5XABCDEFGHIJK123456789/players/player1').reply(200, mockLobby);
-      mock.onDelete('/games/lobbies/01HQ5XABCDEFGHIJK123456789').reply(204);
+    test('lobby flow: create → join → delete', async () => {
+      mock.onPost('/matchmaking/lobbies').reply(200, { data: mockLobby });
+      mock
+        .onPut('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789/players/player2')
+        .reply(200, { data: mockLobby });
+      mock.onDelete('/matchmaking/lobbies/01HQ5XABCDEFGHIJK123456789').reply(204);
 
       const { result: createResult } = renderHook(() => useCreateLobby(apiClient), {
         wrapper: ({ children }) => (
@@ -983,14 +916,15 @@ describe('useGame hooks', () => {
 
       createResult.current.mutate({
         game_title: 'validate-four',
-        max_players: 2,
-        settings: {},
+        mode: 'standard',
+        is_public: true,
+        min_players: 2,
       });
 
       await waitFor(() => expect(createResult.current.isSuccess).toBe(true));
 
       const { result: joinResult } = renderHook(
-        () => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789'),
+        () => useJoinLobby(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player2'),
         {
           wrapper: ({ children }) => (
             <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -1000,18 +934,6 @@ describe('useGame hooks', () => {
 
       joinResult.current.mutate();
       await waitFor(() => expect(joinResult.current.isSuccess).toBe(true));
-
-      const { result: updateResult } = renderHook(
-        () => useUpdateLobbyPlayer(apiClient, '01HQ5XABCDEFGHIJK123456789', 'player1'),
-        {
-          wrapper: ({ children }) => (
-            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-          ),
-        }
-      );
-
-      updateResult.current.mutate({ settings: { ready: true } });
-      await waitFor(() => expect(updateResult.current.isSuccess).toBe(true));
 
       const { result: deleteResult } = renderHook(
         () => useDeleteLobby(apiClient, '01HQ5XABCDEFGHIJK123456789'),

@@ -60,6 +60,9 @@ export interface User {
   /** Unique username identifier */
   username: string;
 
+  /** User email address */
+  email: string;
+
   /** Display name */
   name: string;
 
@@ -71,6 +74,15 @@ export interface User {
 
   /** Social media links (key = platform, value = URL) or null if not set */
   social_links: Record<string, string> | null;
+
+  /** Current player level */
+  level: number;
+
+  /** Total experience points */
+  total_xp: number;
+
+  /** ISO 8601 timestamp when account was created */
+  member_since: string;
 }
 
 /**
@@ -82,6 +94,12 @@ export interface User {
 export interface AuthResponse {
   /** Laravel Sanctum API token (format: "tokenId|hash") */
   token: string;
+
+  /** Token type (always "Bearer") */
+  token_type: string;
+
+  /** Token expiration time in seconds */
+  expires_in: number;
 
   /** Authenticated user data */
   user: User;

@@ -2,13 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosInstance } from 'axios';
 import type {
   Game,
-  GameHistory,
   SubmitActionRequest,
   Lobby,
   CreateLobbyRequest,
-  UpdateLobbyRequest,
+  JoinQueueRequest,
 } from '../../types/game.types';
-import type { ErrorResponse, PaginatedResponse } from '../../types/api.types';
+import type { ErrorResponse, PaginatedResponse, ApiResponse } from '../../types/api.types';
 
 /**
  * Game Management Hooks
@@ -60,8 +59,8 @@ export function useGameQuery(
   return useQuery<Game, ErrorResponse>({
     queryKey: ['game', ulid],
     queryFn: async () => {
-      const response = await apiClient.get<Game>(`/games/${ulid}`);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<Game>>(`/games/${ulid}`);
+      return response.data.data;
     },
     refetchInterval: false,
     refetchOnWindowFocus: false,
@@ -130,45 +129,10 @@ export function useGameOptions(
   return useQuery<Record<string, unknown>, ErrorResponse>({
     queryKey: ['game', ulid, 'options'],
     queryFn: async () => {
-      const response = await apiClient.get<Record<string, unknown>>(`/games/${ulid}/options`);
-      return response.data;
-    },
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    ...options,
-  });
-}
-
-/**
- * Query hook for fetching game action history
- *
- * Fetches complete action history for game replay.
- *
- * @param apiClient - Configured Axios instance from setupAPIClient
- * @param ulid - Game ULID identifier
- * @param options - Optional query options (enabled, etc.)
- * @returns React Query query for game history
- *
- * @example
- * ```typescript
- * const { data: history } = useGameHistory(apiClient, gameUlid);
- *
- * // Replay game moves
- * history?.actions.forEach((action, index) => {
- *   console.log(`Move ${index + 1}: ${action.action_type}`);
- * });
- * ```
- */
-export function useGameHistory(
-  apiClient: AxiosInstance,
-  ulid: string,
-  options?: { enabled?: boolean }
-) {
-  return useQuery<GameHistory, ErrorResponse>({
-    queryKey: ['game', ulid, 'history'],
-    queryFn: async () => {
-      const response = await apiClient.get<GameHistory>(`/games/${ulid}/history`);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
+        `/games/${ulid}/options`
+      );
+      return response.data.data;
     },
     refetchInterval: false,
     refetchOnWindowFocus: false,
@@ -199,9 +163,9 @@ export function useGameHistory(
 export function useGameAction(apiClient: AxiosInstance, ulid: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Game, ErrorResponse, SubmitActionRequest>({
+  return useMutation<ApiResponse<Game>, ErrorResponse, SubmitActionRequest>({
     mutationFn: async (action: SubmitActionRequest) => {
-      const response = await apiClient.post<Game>(`/games/${ulid}/action`, action);
+      const response = await apiClient.post<ApiResponse<Game>>(`/games/${ulid}/actions`, action);
       return response.data;
     },
     onSuccess: async () => {
@@ -232,9 +196,9 @@ export function useGameAction(apiClient: AxiosInstance, ulid: string) {
 export function useForfeitGame(apiClient: AxiosInstance, ulid: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Game, ErrorResponse, void>({
+  return useMutation<ApiResponse<Game>, ErrorResponse, void>({
     mutationFn: async () => {
-      const response = await apiClient.post<Game>(`/games/${ulid}/forfeit`);
+      const response = await apiClient.post<ApiResponse<Game>>(`/games/${ulid}/concede`);
       return response.data;
     },
     onSuccess: async () => {
@@ -268,7 +232,9 @@ export function useLobbiesQuery(
   return useQuery<PaginatedResponse<Lobby>, ErrorResponse>({
     queryKey: ['lobbies', params],
     queryFn: async () => {
-      const response = await apiClient.get<PaginatedResponse<Lobby>>('/games/lobbies', { params });
+      const response = await apiClient.get<PaginatedResponse<Lobby>>('/matchmaking/lobbies', {
+        params,
+      });
       return response.data;
     },
     refetchInterval: false,
@@ -304,8 +270,8 @@ export function useLobbyQuery(
   return useQuery<Lobby, ErrorResponse>({
     queryKey: ['lobby', ulid],
     queryFn: async () => {
-      const response = await apiClient.get<Lobby>(`/games/lobbies/${ulid}`);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<Lobby>>(`/matchmaking/lobbies/${ulid}`);
+      return response.data.data;
     },
     refetchInterval: false,
     refetchOnWindowFocus: false,
@@ -338,9 +304,9 @@ export function useLobbyQuery(
 export function useCreateLobby(apiClient: AxiosInstance) {
   const queryClient = useQueryClient();
 
-  return useMutation<Lobby, ErrorResponse, CreateLobbyRequest>({
+  return useMutation<ApiResponse<Lobby>, ErrorResponse, CreateLobbyRequest>({
     mutationFn: async (data: CreateLobbyRequest) => {
-      const response = await apiClient.post<Lobby>('/games/lobbies', data);
+      const response = await apiClient.post<ApiResponse<Lobby>>('/matchmaking/lobbies', data);
       return response.data;
     },
     onSuccess: async () => {
@@ -357,61 +323,29 @@ export function useCreateLobby(apiClient: AxiosInstance) {
  *
  * @param apiClient - Configured Axios instance from setupAPIClient
  * @param ulid - Lobby ULID identifier
+ * @param username - Player username joining the lobby
  * @returns React Query mutation for joining lobby
  *
  * @example
  * ```typescript
- * const { mutate: joinLobby } = useJoinLobby(apiClient, lobbyUlid);
+ * const { mutate: joinLobby } = useJoinLobby(apiClient, lobbyUlid, 'myusername');
  *
  * joinLobby();
  * ```
  */
-export function useJoinLobby(apiClient: AxiosInstance, ulid: string) {
+export function useJoinLobby(apiClient: AxiosInstance, ulid: string, username: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Lobby, ErrorResponse, void>({
+  return useMutation<ApiResponse<Lobby>, ErrorResponse, void>({
     mutationFn: async () => {
-      const response = await apiClient.post<Lobby>(`/games/lobbies/${ulid}/players`);
-      return response.data;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['lobby', ulid] });
-      await queryClient.invalidateQueries({ queryKey: ['lobbies'] });
-    },
-  });
-}
-
-/**
- * Mutation hook for updating player status in lobby
- *
- * Updates player's ready status. Invalidates the lobby query to reflect
- * the status change.
- *
- * @param apiClient - Configured Axios instance from setupAPIClient
- * @param ulid - Lobby ULID identifier
- * @param username - Player username to update
- * @returns React Query mutation for updating player status
- *
- * @example
- * ```typescript
- * const { mutate: updateStatus } = useUpdateLobbyPlayer(apiClient, lobbyUlid, 'johndoe');
- *
- * updateStatus({ status: 'ready' });
- * ```
- */
-export function useUpdateLobbyPlayer(apiClient: AxiosInstance, ulid: string, username: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation<Lobby, ErrorResponse, UpdateLobbyRequest>({
-    mutationFn: async (data: UpdateLobbyRequest) => {
-      const response = await apiClient.put<Lobby>(
-        `/games/lobbies/${ulid}/players/${username}`,
-        data
+      const response = await apiClient.put<ApiResponse<Lobby>>(
+        `/matchmaking/lobbies/${ulid}/players/${username}`
       );
       return response.data;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['lobby', ulid] });
+      await queryClient.invalidateQueries({ queryKey: ['lobbies'] });
     },
   });
 }
@@ -438,7 +372,7 @@ export function useRemoveLobbyPlayer(apiClient: AxiosInstance, ulid: string, use
 
   return useMutation<void, ErrorResponse, void>({
     mutationFn: async () => {
-      await apiClient.delete(`/games/lobbies/${ulid}/players/${username}`);
+      await apiClient.delete(`/matchmaking/lobbies/${ulid}/players/${username}`);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['lobby', ulid] });
@@ -470,7 +404,7 @@ export function useDeleteLobby(apiClient: AxiosInstance, ulid: string) {
 
   return useMutation<void, ErrorResponse, void>({
     mutationFn: async () => {
-      await apiClient.delete(`/games/lobbies/${ulid}`);
+      await apiClient.delete(`/matchmaking/lobbies/${ulid}`);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['lobby', ulid] });
@@ -498,10 +432,10 @@ export function useDeleteLobby(apiClient: AxiosInstance, ulid: string) {
 export function useStartReadyCheck(apiClient: AxiosInstance, ulid: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<{ message: string }, ErrorResponse, void>({
+  return useMutation<ApiResponse<{ message: string }>, ErrorResponse, void>({
     mutationFn: async () => {
-      const response = await apiClient.post<{ message: string }>(
-        `/games/lobbies/${ulid}/ready-check`
+      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+        `/matchmaking/lobbies/${ulid}/ready-check`
       );
       return response.data;
     },
@@ -531,60 +465,40 @@ export function useStartReadyCheck(apiClient: AxiosInstance, ulid: string) {
  */
 export function useJoinQuickplay(apiClient: AxiosInstance) {
   return useMutation<
-    { message: string },
+    ApiResponse<{ message: string; queue_ulid: string }>,
     ErrorResponse,
-    { game_title: string; game_mode?: string }
+    JoinQueueRequest
   >({
-    mutationFn: async (data: { game_title: string; game_mode?: string }) => {
-      const response = await apiClient.post<{ message: string }>('/games/quickplay', data);
+    mutationFn: async (data: JoinQueueRequest) => {
+      const response = await apiClient.post<ApiResponse<{ message: string; queue_ulid: string }>>(
+        '/matchmaking/queue',
+        data
+      );
       return response.data;
     },
   });
 }
 
 /**
- * Mutation hook for leaving quickplay queue
+ * Mutation hook for leaving matchmaking queue
  *
  * Exits matchmaking queue before match is found.
  *
  * @param apiClient - Configured Axios instance from setupAPIClient
- * @returns React Query mutation for leaving quickplay
+ * @param queueUlid - Queue entry ULID to cancel
+ * @returns React Query mutation for leaving queue
  *
  * @example
  * ```typescript
- * const { mutate: leaveQueue } = useLeaveQuickplay(apiClient);
+ * const { mutate: leaveQueue } = useLeaveQuickplay(apiClient, queueUlid);
  *
  * leaveQueue();
  * ```
  */
-export function useLeaveQuickplay(apiClient: AxiosInstance) {
+export function useLeaveQuickplay(apiClient: AxiosInstance, queueUlid: string) {
   return useMutation<void, ErrorResponse, void>({
     mutationFn: async () => {
-      await apiClient.delete('/games/quickplay');
-    },
-  });
-}
-
-/**
- * Mutation hook for accepting quickplay match
- *
- * Confirms acceptance of found match within the time limit.
- *
- * @param apiClient - Configured Axios instance from setupAPIClient
- * @returns React Query mutation for accepting match
- *
- * @example
- * ```typescript
- * const { mutate: acceptMatch } = useAcceptQuickplay(apiClient);
- *
- * acceptMatch({ match_id: 'match_123' });
- * ```
- */
-export function useAcceptQuickplay(apiClient: AxiosInstance) {
-  return useMutation<{ message: string }, ErrorResponse, { match_id: string }>({
-    mutationFn: async (data: { match_id: string }) => {
-      const response = await apiClient.post<{ message: string }>('/games/quickplay/accept', data);
-      return response.data;
+      await apiClient.delete(`/matchmaking/queue/${queueUlid}`);
     },
   });
 }
@@ -605,11 +519,20 @@ export function useAcceptQuickplay(apiClient: AxiosInstance) {
  * requestRematch();
  * ```
  */
-export function useRequestRematch(apiClient: AxiosInstance, ulid: string) {
-  return useMutation<{ request_id: string; message: string }, ErrorResponse, void>({
-    mutationFn: async () => {
-      const response = await apiClient.post<{ request_id: string; message: string }>(
-        `/games/${ulid}/rematch`
+export function useRequestRematch(apiClient: AxiosInstance, gameUlid: string) {
+  return useMutation<
+    ApiResponse<{ ulid: string; message: string }>,
+    ErrorResponse,
+    { message?: string }
+  >({
+    mutationFn: async (data: { message?: string } = {}) => {
+      const response = await apiClient.post<ApiResponse<{ ulid: string; message: string }>>(
+        '/matchmaking/proposals',
+        {
+          type: 'rematch',
+          game_id: gameUlid,
+          ...data,
+        }
       );
       return response.data;
     },
@@ -622,22 +545,24 @@ export function useRequestRematch(apiClient: AxiosInstance, ulid: string) {
  * Accepts a rematch request, creating a new game.
  *
  * @param apiClient - Configured Axios instance from setupAPIClient
- * @param requestId - Rematch request ID
+ * @param proposalUlid - Proposal ULID identifier
  * @returns React Query mutation for accepting rematch
  *
  * @example
  * ```typescript
- * const { mutate: acceptRematch } = useAcceptRematch(apiClient, requestId);
+ * const { mutate: acceptRematch } = useAcceptRematch(apiClient, proposalUlid);
  *
  * acceptRematch(undefined, {
- *   onSuccess: (game) => navigate(`/game/${game.ulid}`)
+ *   onSuccess: () => console.log('Rematch accepted!')
  * });
  * ```
  */
-export function useAcceptRematch(apiClient: AxiosInstance, requestId: string) {
-  return useMutation<Game, ErrorResponse, void>({
+export function useAcceptRematch(apiClient: AxiosInstance, proposalUlid: string) {
+  return useMutation<ApiResponse<{ message: string }>, ErrorResponse, void>({
     mutationFn: async () => {
-      const response = await apiClient.post<Game>(`/games/rematch/${requestId}/accept`);
+      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+        `/matchmaking/proposals/${proposalUlid}/accept`
+      );
       return response.data;
     },
   });
@@ -649,21 +574,21 @@ export function useAcceptRematch(apiClient: AxiosInstance, requestId: string) {
  * Declines a rematch request.
  *
  * @param apiClient - Configured Axios instance from setupAPIClient
- * @param requestId - Rematch request ID
+ * @param proposalUlid - Proposal ULID identifier
  * @returns React Query mutation for declining rematch
  *
  * @example
  * ```typescript
- * const { mutate: declineRematch } = useDeclineRematch(apiClient, requestId);
+ * const { mutate: declineRematch } = useDeclineRematch(apiClient, proposalUlid);
  *
  * declineRematch();
  * ```
  */
-export function useDeclineRematch(apiClient: AxiosInstance, requestId: string) {
-  return useMutation<{ message: string }, ErrorResponse, void>({
+export function useDeclineRematch(apiClient: AxiosInstance, proposalUlid: string) {
+  return useMutation<ApiResponse<{ message: string }>, ErrorResponse, void>({
     mutationFn: async () => {
-      const response = await apiClient.post<{ message: string }>(
-        `/games/rematch/${requestId}/decline`
+      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+        `/matchmaking/proposals/${proposalUlid}/decline`
       );
       return response.data;
     },

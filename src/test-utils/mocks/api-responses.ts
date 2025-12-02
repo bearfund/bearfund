@@ -9,6 +9,7 @@ import type { AuthResponse, User, ErrorResponse } from '../../types';
  */
 export const mockUser: User = {
   username: 'testuser',
+  email: 'testuser@example.com',
   name: 'Test User',
   avatar: 'https://example.com/avatar.png',
   bio: 'Test bio',
@@ -16,6 +17,9 @@ export const mockUser: User = {
     twitter: 'https://twitter.com/testuser',
     discord: 'testuser#1234',
   },
+  level: 5,
+  total_xp: 1250,
+  member_since: '2024-01-01T00:00:00Z',
 };
 
 /**
@@ -23,6 +27,8 @@ export const mockUser: User = {
  */
 export const mockAuthResponse: AuthResponse = {
   token: 'mock-jwt-token-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+  token_type: 'Bearer',
+  expires_in: 3600,
   user: mockUser,
 };
 

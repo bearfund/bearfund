@@ -7,11 +7,28 @@
  * @packageDocumentation
  */
 
-/** Valid game states */
-export type GameState = 'pending' | 'active' | 'paused' | 'completed' | 'cancelled';
+/**
+ * Player in a game instance
+ */
+export interface GamePlayer {
+  /** Unique player identifier in this game context */
+  ulid: string;
 
-/** Valid lobby states */
-export type LobbyState = 'open' | 'in-progress' | 'completed' | 'cancelled';
+  /** Internal user ID */
+  user_id: number;
+
+  /** Username */
+  username: string;
+
+  /** Assigned color/side (optional) */
+  color?: string;
+
+  /** Whether it is this player's turn */
+  is_current_turn: boolean;
+
+  /** Whether this player won */
+  is_winner: boolean;
+}
 
 /**
  * Core game resource structure.
@@ -22,26 +39,23 @@ export interface Game {
   /** Unique game identifier (ULID) */
   ulid: string;
 
-  /** Game title slug (e.g., 'validate-four', 'test-game') */
-  game_title: string;
+  /** Game title (e.g., 'Connect Four', 'Chess') */
+  title: string;
 
-  /** Current game state */
-  state: GameState;
+  /** Game mode (e.g., 'Standard') */
+  mode: string;
 
-  /** Game metadata as JSON object (schema varies by game type) */
-  metadata: Record<string, unknown>;
+  /** Current game status */
+  status: 'active' | 'completed' | 'pending';
 
-  /** Number of players in the game */
-  player_count: number;
+  /** ULID of player whose turn it is */
+  current_turn: string;
 
-  /** Username of game winner (null if not completed) */
-  winner_username: string | null;
+  /** List of participants */
+  players: GamePlayer[];
 
-  /** ISO 8601 timestamp when game started (null if not started) */
-  started_at: string | null;
-
-  /** ISO 8601 timestamp when game completed (null if not completed) */
-  completed_at: string | null;
+  /** Game-specific state (board, moves) */
+  state: Record<string, unknown>;
 
   /** ISO 8601 timestamp when game was created */
   created_at: string;
@@ -56,57 +70,71 @@ export interface Game {
  * Represents a single player action within a game.
  */
 export interface GameAction {
-  /** Unique action identifier (ULID) */
-  ulid: string;
+  /** Unique action identifier */
+  action_id: string;
 
   /** Game this action belongs to */
   game_ulid: string;
 
-  /** Username of player who performed the action */
-  username: string;
+  /** Player ULID who performed the action */
+  player_ulid: string;
 
-  /** Action type (e.g., 'move', 'play_card', 'end_turn') */
-  action_type: string;
+  /** Action type (e.g., 'DROP_PIECE', 'MOVE_PIECE') */
+  action: string;
 
-  /** Action payload as JSON object (schema varies by action type) */
-  payload: Record<string, unknown>;
+  /** Action parameters as JSON object */
+  parameters: Record<string, unknown>;
 
-  /** ISO 8601 timestamp when action was performed */
+  /** Action status */
+  status: 'queued' | 'processed';
+
+  /** ISO 8601 timestamp when action was created */
   created_at: string;
+
+  /** ISO 8601 timestamp when action was processed (optional) */
+  timestamp?: string;
 }
 
 /**
- * Game history entry structure.
- *
- * Represents a complete game record with final state.
+ * Player in a lobby
  */
-export interface GameHistory {
-  /** Unique game identifier (ULID) */
-  ulid: string;
+export interface LobbyPlayer {
+  /** User ID */
+  user_id: number;
 
-  /** Game title slug */
-  game_title: string;
+  /** Username */
+  username: string;
 
-  /** Final game state (typically 'completed' or 'cancelled') */
-  state: GameState;
+  /** Player status in lobby */
+  status: 'accepted' | 'pending';
 
-  /** Game metadata */
-  metadata: Record<string, unknown>;
+  /** How player joined */
+  source: 'host' | 'invited';
+}
 
-  /** Number of players who participated */
-  player_count: number;
+/**
+ * Game mode details
+ */
+export interface GameMode {
+  /** Mode ID */
+  id: number;
 
-  /** Username of winner (null if no winner) */
-  winner_username: string | null;
+  /** Mode slug */
+  slug: string;
 
-  /** ISO 8601 timestamp when game started */
-  started_at: string | null;
+  /** Mode display name */
+  name: string;
+}
 
-  /** ISO 8601 timestamp when game completed */
-  completed_at: string | null;
+/**
+ * User summary for host
+ */
+export interface UserSummary {
+  /** User ID */
+  id: number;
 
-  /** ISO 8601 timestamp when record was created */
-  created_at: string;
+  /** Username */
+  username: string;
 }
 
 /**
@@ -118,91 +146,72 @@ export interface Lobby {
   /** Unique lobby identifier (ULID) */
   ulid: string;
 
-  /** Game title for this lobby */
+  /** The user who created the lobby */
+  host: UserSummary;
+
+  /** The game being played */
   game_title: string;
 
-  /** Current lobby state */
-  state: LobbyState;
+  /** Game mode details */
+  mode: GameMode;
 
-  /** Maximum number of players allowed */
-  max_players: number;
+  /** Visibility */
+  is_public: boolean;
 
-  /** Current number of players in lobby */
-  current_players: number;
+  /** Minimum players required */
+  min_players: number;
 
-  /** Username of lobby creator/host */
-  host_username: string;
+  /** Lobby status */
+  status: 'pending' | 'active';
 
-  /** Lobby configuration/settings as JSON object */
-  settings: Record<string, unknown>;
+  /** List of players in the lobby */
+  players: LobbyPlayer[];
 
-  /** Game ULID once lobby transitions to 'in-progress' (null before game starts) */
-  game_ulid: string | null;
+  /** Scheduled start time (optional) */
+  scheduled_at?: string;
 
   /** ISO 8601 timestamp when lobby was created */
   created_at: string;
-
-  /** ISO 8601 timestamp when lobby was last updated */
-  updated_at: string;
-}
-
-/**
- * Create game request payload.
- */
-export interface CreateGameRequest {
-  /** Game title slug to create */
-  game_title: string;
-
-  /** Optional game metadata/configuration */
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * Update game request payload.
- */
-export interface UpdateGameRequest {
-  /** New game state */
-  state?: GameState;
-
-  /** Updated metadata */
-  metadata?: Record<string, unknown>;
-
-  /** Winner username (set when marking game as completed) */
-  winner_username?: string;
 }
 
 /**
  * Submit game action request payload.
  */
 export interface SubmitActionRequest {
-  /** Action type identifier */
-  action_type: string;
+  /** Action type (e.g., 'DROP_PIECE', 'MOVE_PIECE') */
+  action: string;
 
-  /** Action payload */
-  payload: Record<string, unknown>;
+  /** Action parameters as JSON object */
+  parameters: Record<string, unknown>;
+}
+
+/**
+ * Join matchmaking queue request payload.
+ */
+export interface JoinQueueRequest {
+  /** Game title slug (e.g., 'connect-four') */
+  game_title: string;
+
+  /** Game mode slug (e.g., 'standard', 'ranked') */
+  mode: string;
 }
 
 /**
  * Create lobby request payload.
  */
 export interface CreateLobbyRequest {
-  /** Game title for the lobby */
+  /** Game title slug */
   game_title: string;
 
-  /** Maximum number of players */
-  max_players: number;
+  /** Game mode slug */
+  mode: string;
 
-  /** Lobby configuration/settings */
-  settings?: Record<string, unknown>;
-}
+  /** Whether lobby is publicly visible */
+  is_public: boolean;
 
-/**
- * Update lobby request payload.
- */
-export interface UpdateLobbyRequest {
-  /** New lobby state */
-  state?: LobbyState;
+  /** Minimum players required to start */
+  min_players: number;
 
-  /** Updated settings */
-  settings?: Record<string, unknown>;
+  /** Optional scheduled start time (ISO 8601) */
+  scheduled_at?: string;
 }

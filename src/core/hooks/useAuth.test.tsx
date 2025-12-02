@@ -23,10 +23,14 @@ describe('useAuth hooks', () => {
 
   const mockUser: User = {
     username: 'testuser',
+    email: 'testuser@example.com',
     name: 'Test User',
     avatar: 'https://example.com/avatar.jpg',
     bio: 'Test bio',
     social_links: { twitter: 'https://twitter.com/test' },
+    level: 5,
+    total_xp: 1250,
+    member_since: '2024-01-01T00:00:00Z',
   };
 
   beforeEach(() => {
@@ -297,9 +301,8 @@ describe('useAuth hooks', () => {
 
   describe('useUserQuery', () => {
     test('successfully fetches user profile', async () => {
-      // API returns { data: User } but Axios gives us response.data which is the whole response
-      // Hook does response.data so we get back { data: User }
-      mock.onGet('/auth/user').reply(200, mockUser);
+      // API returns { data: User } wrapped in ApiResponse
+      mock.onGet('/account/profile').reply(200, { data: mockUser });
 
       const { result } = renderHook(() => useUserQuery(apiClient), {
         wrapper,
@@ -311,7 +314,7 @@ describe('useAuth hooks', () => {
     });
 
     test('handles unauthenticated user (401)', async () => {
-      mock.onGet('/auth/user').reply(401, {
+      mock.onGet('/account/profile').reply(401, {
         message: 'Unauthenticated',
         error_code: 'UNAUTHENTICATED',
       });
@@ -333,7 +336,7 @@ describe('useAuth hooks', () => {
     });
 
     test('caches user data correctly', async () => {
-      mock.onGet('/auth/user').reply(200, mockUser);
+      mock.onGet('/account/profile').reply(200, { data: mockUser });
 
       const { result: result1 } = renderHook(() => useUserQuery(apiClient), {
         wrapper,
@@ -357,7 +360,7 @@ describe('useAuth hooks', () => {
   describe('useUpdateProfile', () => {
     test('successfully updates user profile', async () => {
       const updatedUser = { ...mockUser, bio: 'Updated bio' };
-      mock.onPatch('/auth/user').reply(200, updatedUser);
+      mock.onPatch('/account/profile').reply(200, { data: updatedUser });
 
       const { result } = renderHook(() => useUpdateProfile(apiClient), {
         wrapper,
@@ -373,7 +376,7 @@ describe('useAuth hooks', () => {
     });
 
     test('invalidates user query after successful update', async () => {
-      mock.onPatch('/auth/user').reply(200, mockUser);
+      mock.onPatch('/account/profile').reply(200, { data: mockUser });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -399,7 +402,7 @@ describe('useAuth hooks', () => {
 
       for (const update of updates) {
         mock.reset();
-        mock.onPatch('/auth/user').reply(200, { ...mockUser, ...update });
+        mock.onPatch('/account/profile').reply(200, { data: { ...mockUser, ...update } });
 
         const { result } = renderHook(() => useUpdateProfile(apiClient), {
           wrapper,
@@ -416,9 +419,15 @@ describe('useAuth hooks', () => {
     test('complete authentication flow', async () => {
       const token = 'integration-test-token';
 
-      // Step 1: Login
+      // Setup all mocks before starting the flow
       mock.onPost('/auth/login').reply(200, { token, user: mockUser });
+      mock.onGet('/account/profile').reply(200, { data: mockUser });
+      mock
+        .onPatch('/account/profile')
+        .reply(200, { data: { ...mockUser, bio: 'Integration test bio' } });
+      mock.onPost('/auth/logout').reply(200, { message: 'Logged out successfully' });
 
+      // Step 1: Login
       const { result: loginResult } = renderHook(() => useLogin(apiClient, authStorage), {
         wrapper,
       });
@@ -431,10 +440,11 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(loginResult.current.isSuccess).toBe(true));
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
 
-      // Step 2: Fetch user
-      mock.onGet('/auth/user').reply(200, mockUser);
+      // Update mock to return the token after login
+      authStorage.getToken = vi.fn().mockResolvedValue(token);
 
-      const { result: userResult } = renderHook(() => useUserQuery(apiClient), {
+      // Step 2: Fetch user
+      const { result: userResult } = renderHook(() => useUserQuery(apiClient, { enabled: true }), {
         wrapper,
       });
 
@@ -442,9 +452,6 @@ describe('useAuth hooks', () => {
       expect(userResult.current.data).toEqual(mockUser);
 
       // Step 3: Update profile
-      const updatedUser = { ...mockUser, bio: 'Integration test bio' };
-      mock.onPatch('/auth/user').reply(200, updatedUser);
-
       const { result: updateResult } = renderHook(() => useUpdateProfile(apiClient), { wrapper });
 
       updateResult.current.mutate({ bio: 'Integration test bio' });
@@ -452,10 +459,6 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(updateResult.current.isSuccess).toBe(true));
 
       // Step 4: Logout
-      mock.onPost('/auth/logout').reply(200, {
-        message: 'Logged out successfully',
-      });
-
       const { result: logoutResult } = renderHook(() => useLogout(apiClient, authStorage), {
         wrapper,
       });

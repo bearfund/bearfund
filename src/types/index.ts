@@ -30,16 +30,15 @@ export type {
 // Game types
 export type {
   Game,
-  GameState,
+  GamePlayer,
   GameAction,
-  GameHistory,
   Lobby,
-  LobbyState,
-  CreateGameRequest,
-  UpdateGameRequest,
-  SubmitActionRequest,
+  LobbyPlayer,
+  GameMode,
+  UserSummary,
   CreateLobbyRequest,
-  UpdateLobbyRequest,
+  SubmitActionRequest,
+  JoinQueueRequest,
 } from './game.types';
 
 // Billing types

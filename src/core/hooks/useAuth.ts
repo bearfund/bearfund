@@ -241,8 +241,8 @@ export function useUserQuery(apiClient: AxiosInstance, options?: { enabled?: boo
   return useQuery<User, ErrorResponse>({
     queryKey: ['user'],
     queryFn: async () => {
-      const response = await apiClient.get<User>('/auth/user');
-      return response.data;
+      const response = await apiClient.get<{ data: User }>('/account/profile');
+      return response.data.data;
     },
     ...options,
   });
@@ -275,8 +275,8 @@ export function useUpdateProfile(apiClient: AxiosInstance) {
 
   return useMutation<User, ErrorResponse, UpdateProfileRequest>({
     mutationFn: async (data: UpdateProfileRequest) => {
-      const response = await apiClient.patch<User>('/auth/user', data);
-      return response.data;
+      const response = await apiClient.patch<{ data: User }>('/account/profile', data);
+      return response.data.data;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['user'] });
