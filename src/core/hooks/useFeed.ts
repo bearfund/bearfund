@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { AxiosInstance } from 'axios';
-import type { Leaderboard } from '../../types/feed.types';
-import type { ApiResponse, ErrorResponse } from '../../types/api.types';
+import type { LeaderboardResponse } from '../../types/feed.types';
+import type { ErrorResponse } from '../../types/api.types';
 
 /**
  * Data Feed Hooks
@@ -49,12 +49,10 @@ export function useLeaderboardQuery(
   gameTitle: string,
   options?: { enabled?: boolean }
 ) {
-  return useQuery<ApiResponse<Leaderboard>, ErrorResponse>({
+  return useQuery<LeaderboardResponse, ErrorResponse>({
     queryKey: ['feeds', 'leaderboard', gameTitle],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Leaderboard>>(
-        `/feeds/leaderboards/${gameTitle}`
-      );
+      const response = await apiClient.get<LeaderboardResponse>(`/feeds/leaderboards/${gameTitle}`);
       return response.data;
     },
     ...options,

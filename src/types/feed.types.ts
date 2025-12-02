@@ -28,7 +28,7 @@ export interface LeaderboardEntry {
 }
 
 /**
- * Leaderboard response
+ * Leaderboard data
  */
 export interface Leaderboard {
   /** Game title */
@@ -36,4 +36,11 @@ export interface Leaderboard {
 
   /** Leaderboard entries */
   entries: LeaderboardEntry[];
+}
+
+/**
+ * Response for leaderboard endpoint
+ */
+export interface LeaderboardResponse {
+  data: Leaderboard;
 }

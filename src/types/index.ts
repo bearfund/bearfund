@@ -108,7 +108,7 @@ export type {
 } from './economy.types';
 
 // Feed Types
-export type { LeaderboardEntry, Leaderboard } from './feed.types';
+export type { LeaderboardEntry, Leaderboard, LeaderboardResponse } from './feed.types';
 
 // Competition Types
 export type {

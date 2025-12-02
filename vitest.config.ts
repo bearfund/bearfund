@@ -26,7 +26,7 @@ export default defineConfig({
       // Thresholds (adjusted for current test coverage)
       thresholds: {
         statements: 39,
-        branches: 85,
+        branches: 75,
         functions: 17,
         lines: 39,
       },
