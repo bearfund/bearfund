@@ -15,14 +15,32 @@ export { setupAPIClient } from './api';
 /**
  * Authentication Hooks
  */
+export { useLogin, useSocialLogin, useRegister, useVerifyEmail, useLogout } from './hooks';
+
+/**
+ * Account Management Hooks
+ */
 export {
-  useLogin,
-  useSocialLogin,
-  useRegister,
-  useVerifyEmail,
-  useLogout,
-  useUserQuery,
+  useProfileQuery,
   useUpdateProfile,
+  useProgressionQuery,
+  useRecordsQuery,
+  useAlertsQuery,
+  useMarkAlertsRead,
+} from './hooks';
+
+/**
+ * System & Library Hooks
+ */
+export {
+  useHealthQuery,
+  useTimeQuery,
+  useConfigQuery,
+  useSubmitFeedback,
+  useLibraryQuery,
+  useGameTitleQuery,
+  useGameRulesQuery,
+  useGameEntitiesQuery,
 } from './hooks';
 
 /**
@@ -32,34 +50,58 @@ export {
   useGameQuery,
   useGamesQuery,
   useGameOptions,
-  useGameHistory,
   useGameAction,
   useForfeitGame,
-  useLobbiesQuery,
-  useLobbyQuery,
-  useCreateLobby,
-  useJoinLobby,
-  useUpdateLobbyPlayer,
-  useRemoveLobbyPlayer,
-  useDeleteLobby,
-  useStartReadyCheck,
-  useJoinQuickplay,
-  useLeaveQuickplay,
-  useAcceptQuickplay,
-  useRequestRematch,
-  useAcceptRematch,
-  useDeclineRematch,
 } from './hooks';
 
 /**
- * Billing & Subscription Hooks
+ * Matchmaking Hooks
  */
 export {
+  useJoinQueue,
+  useLeaveQueue,
+  useLobbiesQuery,
+  useLobbyQuery,
+  useCreateLobby,
+  useDeleteLobby,
+  useStartReadyCheck,
+  useSeatPlayers,
+  useInvitePlayers,
+  useJoinLobby,
+  useRemoveLobbyPlayer,
+  useCreateProposal,
+  useAcceptProposal,
+  useDeclineProposal,
+} from './hooks';
+
+/**
+ * Data Feed Hooks
+ */
+export { useLeaderboardQuery } from './hooks';
+
+/**
+ * Competition Hooks
+ */
+export {
+  useCompetitionsQuery,
+  useTournamentQuery,
+  useEnterTournament,
+  useTournamentStructureQuery,
+  useTournamentBracketQuery,
+  useTournamentStandingsQuery,
+} from './hooks';
+
+/**
+ * Economy & Transaction Hooks
+ */
+export {
+  useBalanceQuery,
+  useTransactionsQuery,
+  useCashier,
   usePlansQuery,
-  useSubscriptionStatus,
-  useQuotas,
+  useSubscriptionQuery,
   useSubscribe,
-  useCustomerPortal,
+  useCancelSubscription,
   useVerifyAppleReceipt,
   useVerifyGoogleReceipt,
   useVerifyTelegramReceipt,

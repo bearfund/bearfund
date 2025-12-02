@@ -2,7 +2,6 @@
  * Tests for Laravel Echo client setup
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setupEcho } from './echo-client';
 import type { EchoConfig } from './echo-client';

@@ -97,7 +97,7 @@ function LoginForm() {
 }
 
 function UserProfile() {
-  const { data: user, isLoading } = useUserQuery(apiClient);
+  const { data: user, isLoading } = useProfileQuery(apiClient);
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -223,58 +223,100 @@ const apiClient = setupAPIClient({
 ### Authentication
 
 - `useLogin(apiClient, authStorage)` - Email/password login
-- `useSocialLogin(apiClient, authStorage)` - Social OAuth login (Google, Discord, Steam)
+- `useSocialLogin(apiClient, authStorage)` - Social OAuth login (Google, Apple, Telegram)
 - `useRegister(apiClient)` - New user registration
 - `useVerifyEmail(apiClient, authStorage)` - Email verification
+- `useRefreshToken(apiClient, authStorage)` - Refresh authentication token
 - `useLogout(apiClient, authStorage)` - Logout and clear tokens
-- `useUserQuery(apiClient)` - Fetch current user profile
-- `useUpdateProfile(apiClient)` - Update user profile
+
+### Account Management
+
+- `useProfileQuery(apiClient)` - Fetch current user profile
+- `useUpdateProfile(apiClient)` - Update user profile (name, username, bio, social links)
+- `useProgressionQuery(apiClient)` - Get levels, XP, titles, badges, and achievements
+- `useRecordsQuery(apiClient)` - Get gameplay records and statistics
+- `useAlertsQuery(apiClient, options)` - Get user notifications (paginated)
+- `useMarkAlertsRead(apiClient)` - Mark alerts as read
+
+### System & Library
+
+- `useHealthQuery(apiClient, options)` - Check API health, version, and database status
+- `useTimeQuery(apiClient, options)` - Get authoritative server time for synchronization
+- `useConfigQuery(apiClient, options)` - Fetch platform configuration and supported games
+- `useSubmitFeedback(apiClient)` - Submit bug reports or feature requests
+- `useLibraryQuery(apiClient, options)` - Get game catalog with titles and metadata
+- `useGameTitleQuery(apiClient, gameTitle, options)` - Get detailed game information
+- `useGameRulesQuery(apiClient, gameTitle, options)` - Get complete game rules documentation
+- `useGameEntitiesQuery(apiClient, gameTitle, options)` - Get game entities (cards, pieces, etc.)
 
 ### Games
 
-- `useGameQuery(apiClient, ulid)` - Fetch game by ULID
-- `useGamesQuery(apiClient)` - Fetch paginated games list
-- `useGameAction(apiClient, ulid)` - Execute game action
-- `useGameOptions(apiClient, ulid)` - Get available game options
-- `useGameHistory(apiClient, ulid)` - Get game action history
-- `useForfeitGame(apiClient, ulid)` - Forfeit a game
-
-### Lobbies
-
-- `useLobbiesQuery(apiClient)` - Fetch available lobbies
-- `useLobbyQuery(apiClient, ulid)` - Fetch lobby by ULID
-- `useCreateLobby(apiClient)` - Create new lobby
-- `useJoinLobby(apiClient, ulid)` - Join a lobby
-- `useUpdateLobbyPlayer(apiClient, ulid, username)` - Update player status
-- `useRemoveLobbyPlayer(apiClient, ulid, username)` - Remove player from lobby
-- `useDeleteLobby(apiClient, ulid)` - Delete lobby
-- `useStartReadyCheck(apiClient, ulid)` - Start ready check
+- `useGameQuery(apiClient, ulid, options)` - Fetch game state by ULID
+- `useGamesQuery(apiClient, options)` - List user's active and recent games (paginated)
+- `useGameAction(apiClient, ulid)` - Submit game action (move, turn) with idempotency
+- `useGameActionsQuery(apiClient, ulid, options)` - Get complete action/move history
+- `useGameOptions(apiClient, ulid, options)` - Get valid actions for current turn
+- `useGameOutcome(apiClient, ulid, options)` - Get game outcome and results
+- `useConcedeGame(apiClient, ulid)` - Concede game
+- `useAbandonGame(apiClient, ulid)` - Abandon game (higher penalty)
+- `useForfeitGame(apiClient, ulid)` - Alias for `useConcedeGame` (deprecated)
 
 ### Matchmaking
 
-- `useJoinQuickplay(apiClient)` - Join quickplay queue
-- `useLeaveQuickplay(apiClient)` - Leave quickplay queue
-- `useAcceptQuickplay(apiClient)` - Accept quickplay match
-- `useRequestRematch(apiClient, ulid)` - Request rematch
-- `useAcceptRematch(apiClient, requestId)` - Accept rematch
-- `useDeclineRematch(apiClient, requestId)` - Decline rematch
+#### Queue
 
-### Billing
+- `useJoinQueue(apiClient)` - Join matchmaking queue
+- `useLeaveQueue(apiClient, queueSlotUlid)` - Leave queue
 
-- `usePlansQuery(apiClient)` - Fetch subscription plans
-- `useSubscriptionStatus(apiClient)` - Get current subscription
-- `useQuotas(apiClient)` - Get usage quotas
-- `useSubscribe(apiClient)` - Subscribe to plan (Stripe)
-- `useCustomerPortal(apiClient)` - Open Stripe customer portal
-- `useVerifyAppleReceipt(apiClient)` - Verify Apple IAP receipt
+#### Lobbies
+
+- `useLobbiesQuery(apiClient, options)` - List public lobbies with filtering
+- `useLobbyQuery(apiClient, ulid, options)` - Get lobby details
+- `useCreateLobby(apiClient)` - Create new lobby
+- `useDeleteLobby(apiClient, ulid)` - Cancel lobby (host only)
+- `useStartReadyCheck(apiClient, ulid)` - Initiate ready check (host only)
+- `useSeatPlayers(apiClient, ulid)` - Assign player positions (host only)
+- `useInvitePlayers(apiClient, ulid)` - Invite players to lobby (host only)
+- `useJoinLobby(apiClient, ulid, username)` - Accept/join lobby
+- `useRemoveLobbyPlayer(apiClient, ulid, username)` - Kick player (host only)
+
+#### Proposals (Challenges & Rematches)
+
+- `useCreateProposal(apiClient)` - Create rematch or challenge
+- `useAcceptProposal(apiClient, proposalUlid)` - Accept proposal
+- `useDeclineProposal(apiClient, proposalUlid)` - Decline proposal
+
+### Economy
+
+- `useBalanceQuery(apiClient, options)` - Get user's token/chip balance for current client
+- `useTransactionsQuery(apiClient, options)` - Get transaction history (virtual + real payments)
+- `useCashier(apiClient)` - Add/remove tokens or chips (approved clients only)
+- `usePlansQuery(apiClient)` - List subscription plans
+- `useSubscriptionQuery(apiClient, options)` - Get current subscription status
+- `useSubscribe(apiClient)` - Start subscription
+- `useCancelSubscription(apiClient)` - Cancel subscription
+- `useVerifyAppleReceipt(apiClient)` - Verify Apple In-App Purchase receipt
 - `useVerifyGoogleReceipt(apiClient)` - Verify Google Play receipt
 - `useVerifyTelegramReceipt(apiClient)` - Verify Telegram Stars payment
+
+### Data Feeds
+
+- `useLeaderboardQuery(apiClient, gameTitle, options)` - Get game leaderboard with rankings
+
+### Competitions (Tournaments)
+
+- `useCompetitionsQuery(apiClient, options)` - List active tournaments (paginated)
+- `useTournamentQuery(apiClient, tournamentId, options)` - Get tournament details
+- `useEnterTournament(apiClient)` - Register for tournament
+- `useTournamentStructureQuery(apiClient, tournamentId, options)` - Get tournament format rules
+- `useTournamentBracketQuery(apiClient, tournamentId, options)` - Get tournament bracket
+- `useTournamentStandingsQuery(apiClient, tournamentId, options)` - Get current standings
 
 ### Real-Time
 
 - `setupEcho(token, config)` - Setup Laravel Echo WebSocket client
-- `useRealtimeGame(gameUlid, options)` - Subscribe to game events
-- `useRealtimeLobby(lobbyUlid, options)` - Subscribe to lobby events
+- `useRealtimeGame(gameUlid, options)` - Subscribe to game events (ActionProcessed, GameCompleted)
+- `useRealtimeLobby(lobbyUlid, options)` - Subscribe to lobby events (PlayerJoined, ReadyCheck)
 
 ## Type Definitions
 
@@ -282,30 +324,144 @@ All TypeScript types are exported for your use:
 
 ```typescript
 import type {
-  // Auth
-  User,
+  // Authentication
   AuthStorage,
+  User,
+  AuthResponse,
   LoginRequest,
   RegisterRequest,
-  AuthResponse,
-  // API
+  RegisterResponse,
+  VerifyRequest,
+  SocialLoginRequest,
+
+  // Account Management
+  UpdateProfileRequest,
+  UserTitle,
+  UserBadge,
+  UserAchievement,
+  UserMilestone,
+  UserProgression,
+  GameStatistic,
+  UserRecords,
+  Alert,
+  AlertType,
+  AlertsResponse,
+  MarkAlertsReadRequest,
+
+  // System & Library
+  SystemHealth,
+  SystemTime,
+  SystemConfig,
+  FeedbackType,
+  SubmitFeedbackRequest,
+  FeedbackResponse,
+  GameTitle,
+  GameLibraryResponse,
+  GameRules,
+  GameEntities,
+
+  // API Response Wrappers
   ApiResponse,
   PaginatedResponse,
+  PaginationMeta,
+  PaginationLinks,
   ErrorResponse,
+
   // Games
   Game,
-  GameState,
+  GameListItem,
+  GamePlayer,
   GameAction,
+  GameActionResponse,
+  GameOptions,
+  GameOutcome,
+  SubmitActionRequest,
+
+  // Matchmaking
+  QueueSlot,
+  JoinQueueRequest,
+  QueueSlotResponse,
   Lobby,
-  LobbyPlayer,
-  // Billing
+  LobbyPlayerDetailed,
+  LobbyHost,
+  CreateLobbyRequest,
+  JoinLobbyRequest,
+  SeatPlayersRequest,
+  InvitePlayersRequest,
+  Proposal,
+  CreateRematchRequest,
+  CreateChallengeRequest,
+  CreateProposalRequest,
+  ProposalResponse,
+  AcceptProposalResponse,
+  DeclineProposalResponse,
+
+  // Economy
+  CurrencyBalance,
+  UserBalance,
+  TransactionType,
+  CurrencyType,
+  PaymentProvider,
+  Transaction,
+  CashierRequest,
+  CashierResponse,
   SubscriptionPlan,
-  BillingStatus,
-  UsageQuotas,
-  // Real-time
-  GameEvent,
-  LobbyEvent,
-  ConnectionStatus,
+  UserSubscription,
+  SubscribeRequest,
+  VerifyReceiptRequest,
+  VerifyReceiptResponse,
+
+  // Data Feeds
+  LeaderboardEntry,
+  Leaderboard,
+  LeaderboardResponse,
+
+  // Competitions (Tournaments)
+  TournamentFormat,
+  TournamentStatus,
+  TournamentCurrency,
+  Tournament,
+  TournamentEntry,
+  TournamentStructure,
+  BracketMatch,
+  BracketRound,
+  TournamentBracket,
+  TournamentStanding,
+  TournamentStandings,
+  TournamentsResponse,
+  TournamentResponse,
+  TournamentEntryResponse,
+  TournamentStructureResponse,
+  TournamentBracketResponse,
+  TournamentStandingsResponse,
+
+  // Real-Time Events
+  RealtimeEventType,
+  BaseEvent,
+  GameCreatedPayload,
+  GameUpdatedPayload,
+  GameActionPayload,
+  GameCompletedPayload,
+  LobbyCreatedPayload,
+  LobbyUpdatedPayload,
+  LobbyPlayerJoinedPayload,
+  LobbyPlayerLeftPayload,
+  LobbyGameStartedPayload,
+  UserProfileUpdatedPayload,
+  NotificationPayload,
+  GameCreatedEvent,
+  GameUpdatedEvent,
+  GameActionEvent,
+  GameCompletedEvent,
+  LobbyCreatedEvent,
+  LobbyUpdatedEvent,
+  LobbyPlayerJoinedEvent,
+  LobbyPlayerLeftEvent,
+  LobbyGameStartedEvent,
+  UserProfileUpdatedEvent,
+  NotificationEvent,
+  RealtimeEvent,
+  ChannelOptions,
 } from '@gamerprotocol/ui';
 ```
 
@@ -319,17 +475,19 @@ For complete documentation, examples, and API reference, visit:
 
 ## Requirements
 
-- React 19.0.0 or higher
-- TypeScript 5.0 or higher (recommended)
-- React Native 0.70.0 or higher (for native platforms)
+- **React**: 19.0.0 or higher
+- **TypeScript**: 5.9 or higher (recommended)
+- **React Native**: 0.70.0 or higher (optional, for native platforms)
 
-## Peer Dependencies
+## Dependencies
+
+The package includes these dependencies:
 
 ```json
 {
-  "@tanstack/react-query": "^5.59.0",
-  "axios": "^1.7.7",
-  "laravel-echo": "^1.16.1",
+  "@tanstack/react-query": "^5.90.11",
+  "axios": "^1.13.2",
+  "laravel-echo": "^2.2.6",
   "pusher-js": "^8.4.0-rc2"
 }
 ```

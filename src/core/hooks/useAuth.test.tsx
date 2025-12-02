@@ -9,10 +9,10 @@ import {
   useSocialLogin,
   useRegister,
   useVerifyEmail,
+  useRefreshToken,
   useLogout,
-  useUserQuery,
-  useUpdateProfile,
 } from './useAuth';
+import { useProfileQuery, useUpdateProfile } from './useAccount';
 import type { AuthStorage, User } from '../../types/auth.types';
 
 describe('useAuth hooks', () => {
@@ -23,10 +23,14 @@ describe('useAuth hooks', () => {
 
   const mockUser: User = {
     username: 'testuser',
+    email: 'testuser@example.com',
     name: 'Test User',
     avatar: 'https://example.com/avatar.jpg',
     bio: 'Test bio',
     social_links: { twitter: 'https://twitter.com/test' },
+    level: 5,
+    total_xp: 1250,
+    member_since: '2024-01-01T00:00:00Z',
   };
 
   beforeEach(() => {
@@ -64,6 +68,8 @@ describe('useAuth hooks', () => {
       const token = 'test-auth-token';
       mock.onPost('/auth/login').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -79,7 +85,8 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
-      expect(result.current.data).toEqual({ token, user: mockUser });
+      expect(result.current.data?.token).toBe(token);
+      expect(result.current.data?.user).toEqual(mockUser);
     });
 
     test('handles login failure', async () => {
@@ -105,7 +112,12 @@ describe('useAuth hooks', () => {
 
     test('invalidates user query after successful login', async () => {
       const token = 'test-auth-token';
-      mock.onPost('/auth/login').reply(200, { token, user: mockUser });
+      mock.onPost('/auth/login').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -129,6 +141,8 @@ describe('useAuth hooks', () => {
       const token = 'social-auth-token';
       mock.onPost('/auth/social').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -142,7 +156,8 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
-      expect(result.current.data).toEqual({ token, user: mockUser });
+      expect(result.current.data?.token).toBe(token);
+      expect(result.current.data?.user).toEqual(mockUser);
     });
 
     test('handles social login with different providers', async () => {
@@ -151,7 +166,12 @@ describe('useAuth hooks', () => {
       for (const provider of providers) {
         mock.reset();
         const token = `${provider}-token`;
-        mock.onPost('/auth/social').reply(200, { token, user: mockUser });
+        mock.onPost('/auth/social').reply(200, {
+          token,
+          token_type: 'Bearer',
+          expires_in: 31536000,
+          user: mockUser,
+        });
 
         const { result } = renderHook(() => useSocialLogin(apiClient, authStorage), { wrapper });
 
@@ -168,7 +188,8 @@ describe('useAuth hooks', () => {
   describe('useRegister', () => {
     test('successfully registers new user', async () => {
       mock.onPost('/auth/register').reply(200, {
-        message: 'Registration successful. Please check your email.',
+        message: 'Registration successful. Please check your email to verify your account.',
+        registration_id: '01J3ABC123',
       });
 
       const { result } = renderHook(() => useRegister(apiClient), { wrapper });
@@ -178,11 +199,13 @@ describe('useAuth hooks', () => {
         username: 'newuser',
         password: 'password123',
         password_confirmation: 'password123',
+        client_id: 5,
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.message).toContain('email');
+      expect(result.current.data?.registration_id).toBe('01J3ABC123');
     });
 
     test('handles registration validation errors', async () => {
@@ -202,6 +225,7 @@ describe('useAuth hooks', () => {
         username: 'existinguser',
         password: 'password123',
         password_confirmation: 'password123',
+        client_id: 5,
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -213,6 +237,8 @@ describe('useAuth hooks', () => {
       const token = 'verified-token';
       mock.onPost('/auth/verify').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -225,6 +251,25 @@ describe('useAuth hooks', () => {
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
     });
 
+    test('successfully verifies email with optional name parameter', async () => {
+      const token = 'verified-token';
+      mock.onPost('/auth/verify').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: { ...mockUser, name: 'Cool Player' },
+      });
+
+      const { result } = renderHook(() => useVerifyEmail(apiClient, authStorage), { wrapper });
+
+      result.current.mutate({ token: 'verification-token', name: 'Cool Player' });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(authStorage.setToken).toHaveBeenCalledWith(token);
+      expect(result.current.data?.user.name).toBe('Cool Player');
+    });
+
     test('handles invalid verification token', async () => {
       mock.onPost('/auth/verify').reply(400, {
         message: 'Invalid or expired verification token',
@@ -234,6 +279,63 @@ describe('useAuth hooks', () => {
       const { result } = renderHook(() => useVerifyEmail(apiClient, authStorage), { wrapper });
 
       result.current.mutate({ token: 'invalid-token' });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      expect(authStorage.setToken).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('useRefreshToken', () => {
+    test('successfully refreshes token and stores new token', async () => {
+      const newToken = 'refreshed-token';
+      mock.onPost('/auth/refresh').reply(200, {
+        token: newToken,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(authStorage.setToken).toHaveBeenCalledWith(newToken);
+      expect(result.current.data?.token).toBe(newToken);
+      expect(result.current.data?.expires_in).toBe(31536000);
+    });
+
+    test('invalidates user query after successful refresh', async () => {
+      const newToken = 'refreshed-token';
+      mock.onPost('/auth/refresh').reply(200, {
+        token: newToken,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user'] });
+    });
+
+    test('handles refresh token failure', async () => {
+      mock.onPost('/auth/refresh').reply(401, {
+        message: 'Token expired or invalid',
+        error_code: 'INVALID_TOKEN',
+      });
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
 
       await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -295,130 +397,24 @@ describe('useAuth hooks', () => {
     });
   });
 
-  describe('useUserQuery', () => {
-    test('successfully fetches user profile', async () => {
-      // API returns { data: User } but Axios gives us response.data which is the whole response
-      // Hook does response.data so we get back { data: User }
-      mock.onGet('/auth/user').reply(200, mockUser);
-
-      const { result } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(mockUser);
-    });
-
-    test('handles unauthenticated user (401)', async () => {
-      mock.onGet('/auth/user').reply(401, {
-        message: 'Unauthenticated',
-        error_code: 'UNAUTHENTICATED',
-      });
-
-      const { result } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result.current.isError).toBe(true));
-    });
-
-    test('can be disabled via options', () => {
-      const { result } = renderHook(() => useUserQuery(apiClient, { enabled: false }), { wrapper });
-
-      // Should not fetch when disabled
-      expect(result.current.data).toBeUndefined();
-      expect(result.current.isLoading).toBe(false);
-      expect(mock.history.get.length).toBe(0);
-    });
-
-    test('caches user data correctly', async () => {
-      mock.onGet('/auth/user').reply(200, mockUser);
-
-      const { result: result1 } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result1.current.isSuccess).toBe(true));
-
-      // Second hook should use cached data (or refetch - both are acceptable)
-      const { result: result2 } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      // Data should be available immediately from cache or after fetch
-      await waitFor(() => expect(result2.current.data).toEqual(mockUser));
-
-      // Verify at least one API call was made
-      expect(mock.history.get.length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('useUpdateProfile', () => {
-    test('successfully updates user profile', async () => {
-      const updatedUser = { ...mockUser, bio: 'Updated bio' };
-      mock.onPatch('/auth/user').reply(200, updatedUser);
-
-      const { result } = renderHook(() => useUpdateProfile(apiClient), {
-        wrapper,
-      });
-
-      result.current.mutate({
-        bio: 'Updated bio',
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(updatedUser);
-    });
-
-    test('invalidates user query after successful update', async () => {
-      mock.onPatch('/auth/user').reply(200, mockUser);
-
-      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
-
-      const { result } = renderHook(() => useUpdateProfile(apiClient), {
-        wrapper,
-      });
-
-      result.current.mutate({ name: 'New Name' });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user'] });
-    });
-
-    test('handles partial profile updates', async () => {
-      const updates = [
-        { username: 'newusername' },
-        { name: 'New Name' },
-        { bio: 'New bio' },
-        { avatar: 'https://example.com/new-avatar.jpg' },
-        { social_links: { twitter: 'https://twitter.com/newhandle' } },
-      ];
-
-      for (const update of updates) {
-        mock.reset();
-        mock.onPatch('/auth/user').reply(200, { ...mockUser, ...update });
-
-        const { result } = renderHook(() => useUpdateProfile(apiClient), {
-          wrapper,
-        });
-
-        result.current.mutate(update);
-
-        await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      }
-    });
-  });
-
   describe('integration: login -> fetch user -> update profile -> logout', () => {
     test('complete authentication flow', async () => {
       const token = 'integration-test-token';
 
-      // Step 1: Login
-      mock.onPost('/auth/login').reply(200, { token, user: mockUser });
+      // Setup all mocks before starting the flow
+      mock.onPost('/auth/login').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
+      mock.onGet('/account/profile').reply(200, { data: mockUser });
+      mock
+        .onPatch('/account/profile')
+        .reply(200, { data: { ...mockUser, bio: 'Integration test bio' } });
+      mock.onPost('/auth/logout').reply(200, { message: 'Logged out successfully' });
 
+      // Step 1: Login
       const { result: loginResult } = renderHook(() => useLogin(apiClient, authStorage), {
         wrapper,
       });
@@ -431,20 +427,21 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(loginResult.current.isSuccess).toBe(true));
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
 
-      // Step 2: Fetch user
-      mock.onGet('/auth/user').reply(200, mockUser);
+      // Update mock to return the token after login
+      authStorage.getToken = vi.fn().mockResolvedValue(token);
 
-      const { result: userResult } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
+      // Step 2: Fetch user
+      const { result: userResult } = renderHook(
+        () => useProfileQuery(apiClient, { enabled: true }),
+        {
+          wrapper,
+        }
+      );
 
       await waitFor(() => expect(userResult.current.isSuccess).toBe(true));
       expect(userResult.current.data).toEqual(mockUser);
 
       // Step 3: Update profile
-      const updatedUser = { ...mockUser, bio: 'Integration test bio' };
-      mock.onPatch('/auth/user').reply(200, updatedUser);
-
       const { result: updateResult } = renderHook(() => useUpdateProfile(apiClient), { wrapper });
 
       updateResult.current.mutate({ bio: 'Integration test bio' });
@@ -452,10 +449,6 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(updateResult.current.isSuccess).toBe(true));
 
       // Step 4: Logout
-      mock.onPost('/auth/logout').reply(200, {
-        message: 'Logged out successfully',
-      });
-
       const { result: logoutResult } = renderHook(() => useLogout(apiClient, authStorage), {
         wrapper,
       });

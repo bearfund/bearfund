@@ -13,10 +13,40 @@ export type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   VerifyRequest,
   SocialLoginRequest,
-  UpdateProfileRequest,
 } from './auth.types';
+
+// Account types
+export type {
+  UpdateProfileRequest,
+  UserTitle,
+  UserBadge,
+  UserAchievement,
+  UserMilestone,
+  UserProgression,
+  GameStatistic,
+  UserRecords,
+  Alert,
+  AlertType,
+  AlertsResponse,
+  MarkAlertsReadRequest,
+} from './account.types';
+
+// System types
+export type {
+  SystemHealth,
+  SystemTime,
+  SystemConfig,
+  FeedbackType,
+  SubmitFeedbackRequest,
+  FeedbackResponse,
+  GameTitle,
+  GameLibraryResponse,
+  GameRules,
+  GameEntities,
+} from './system.types';
 
 // API types
 export type {
@@ -30,30 +60,76 @@ export type {
 // Game types
 export type {
   Game,
-  GameState,
+  GameListItem,
+  GamePlayer,
   GameAction,
-  GameHistory,
-  Lobby,
-  LobbyState,
-  CreateGameRequest,
-  UpdateGameRequest,
+  GameActionResponse,
+  GameOptions,
+  GameOutcome,
   SubmitActionRequest,
-  CreateLobbyRequest,
-  UpdateLobbyRequest,
 } from './game.types';
 
-// Billing types
+// Matchmaking types
 export type {
+  QueueSlot,
+  JoinQueueRequest,
+  QueueSlotResponse,
+  Lobby,
+  LobbyPlayerDetailed,
+  LobbyHost,
+  CreateLobbyRequest,
+  JoinLobbyRequest,
+  SeatPlayersRequest,
+  InvitePlayersRequest,
+  Proposal,
+  CreateRematchRequest,
+  CreateChallengeRequest,
+  CreateProposalRequest,
+  ProposalResponse,
+  AcceptProposalResponse,
+  DeclineProposalResponse,
+} from './matchmaking.types';
+
+// Economy types
+export type {
+  CurrencyBalance,
+  UserBalance,
+  TransactionType,
+  CurrencyType,
+  PaymentProvider,
+  Transaction,
+  CashierRequest,
+  CashierResponse,
   SubscriptionPlan,
-  SubscriptionTier,
-  BillingStatus,
-  UsageQuotas,
   UserSubscription,
-  Invoice,
-  CreateSubscriptionRequest,
-  UpdateSubscriptionRequest,
-  CancelSubscriptionRequest,
-} from './billing.types';
+  SubscribeRequest,
+  VerifyReceiptRequest,
+  VerifyReceiptResponse,
+} from './economy.types';
+
+// Feed Types
+export type { LeaderboardEntry, Leaderboard, LeaderboardResponse } from './feed.types';
+
+// Competition Types
+export type {
+  TournamentFormat,
+  TournamentStatus,
+  TournamentCurrency,
+  Tournament,
+  TournamentEntry,
+  TournamentStructure,
+  BracketMatch,
+  BracketRound,
+  TournamentBracket,
+  TournamentStanding,
+  TournamentStandings,
+  TournamentsResponse,
+  TournamentResponse,
+  TournamentEntryResponse,
+  TournamentStructureResponse,
+  TournamentBracketResponse,
+  TournamentStandingsResponse,
+} from './competition.types';
 
 // Real-time types
 export type {

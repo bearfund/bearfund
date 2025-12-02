@@ -97,17 +97,25 @@ Identifies the client application (web, iOS, Android, Telegram bot). Required fo
 
 ## API Namespaces
 
-### 1. System & Webhooks
+### 1. System & Webhooks "data": {
 
-Health monitoring and external service webhooks.
+    "game_ulid": "01J3GAME...",
+    "status": "completed",
+    "outcome_type": "win",
+    "winner": {
+      "ulid": "01J3PLY1...",
+      "username": "coolplayer"
+    },
 
-| Method | Endpoint           | Purpose                                           | Auth             |
-| ------ | ------------------ | ------------------------------------------------- | ---------------- |
-| `GET`  | `/system/health`   | API health check with database connectivity       | Public           |
-| `POST` | `/system/feedback` | Submit feedback, bug reports, or support requests | Public/Auth      |
-| `POST` | `/webhooks/stripe` | Stripe subscription event handler                 | Vendor Signature |
-| `POST` | `/webhooks/apple`  | Apple App Store notification handler              | Vendor Signature |
-| `POST` | `/webhooks/google` | Google Play notification handler                  | Vendor Signature |
+Health monitoring, configuration, and external service webhooks.
+
+| Method | Endpoint               | Purpose                                                 | Auth             |
+| ------ | ---------------------- | ------------------------------------------------------- | ---------------- |
+| `GET`  | `/system/health`       | API health check with database connectivity             | Public           |
+| `GET`  | `/system/time`         | Get authoritative server time                           | Public           |
+| `GET`  | `/system/config`       | Get global platform configuration                       | Public           |
+| `POST` | `/system/feedback`     | Submit feedback, bug reports, or support requests       | Public/Auth      |
+| `POST` | `/webhooks/{provider}` | External provider event handler (stripe, apple, google) | Vendor Signature |
 
 **Example: Health Check**
 
@@ -127,6 +135,56 @@ Response:
 }
 ```
 
+**Example: Get Time**
+
+```http
+GET /v1/system/time
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "timestamp": 1763640000,
+  "iso8601": "2025-11-20T12:00:00+00:00",
+  "timezone": "UTC"
+}
+```
+
+**Example: Get Config**
+
+```http
+GET /v1/system/config
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "api_version": "v1",
+  "platform_name": "GamerProtocol",
+  "features": {
+    "authentication_providers": ["email", "google", "apple", "social"],
+    "real_time_games": true,
+    "turn_based_games": true
+  },
+  "supported_games": [
+    {
+      "key": "chess",
+      "name": "Chess",
+      "min_players": 2,
+      "max_players": 2
+    }
+  ],
+  "limits": {
+    "max_concurrent_games": 10,
+    "action_timeout_seconds": 300
+  }
+}
+```
+
 **Example: Submit Feedback**
 
 ```http
@@ -136,6 +194,7 @@ Authorization: Bearer 1|abc123... (Optional)
 Content-Type: application/json
 
 {
+  "client_id": 5,
   "type": "bug",
   "content": "The game freezes when I play a red chip on column 3.",
   "email": "player@example.com", // Required if not authenticated
@@ -153,7 +212,6 @@ Response:
 {
   "id": 42,
   "client_id": 5,
-  "user_id": 123,
   "email": "player@example.com",
   "type": "bug",
   "content": "The game freezes when I play a red chip on column 3.",
@@ -168,17 +226,42 @@ Response:
 }
 ```
 
+**Example: Webhook (Stripe)**
+
+```http
+POST /v1/webhooks/stripe
+Stripe-Signature: t=1492774577,v1=5257a869e7ecebeda32...
+Content-Type: application/json
+
+{
+  "id": "evt_123",
+  "object": "event",
+  "type": "payment_intent.succeeded",
+  "data": { ... }
+}
+```
+
+Response:
+
+```json
+{
+  "received": true,
+  "provider": "stripe"
+}
+```
+
 ---
 
 ### 2. Game Library
 
 Public catalog of available games, rules, and leaderboards.
 
-| Method | Endpoint                    | Purpose                         | Auth   |
-| ------ | --------------------------- | ------------------------------- | ------ |
-| `GET`  | `/library`                  | List all available game titles  | Public |
-| `GET`  | `/library/{titleKey}`       | Get detailed game information   | Public |
-| `GET`  | `/library/{titleKey}/rules` | Get complete rule documentation | Public |
+| Method | Endpoint                        | Purpose                                | Auth   |
+| ------ | ------------------------------- | -------------------------------------- | ------ |
+| `GET`  | `/library`                      | List all available game titles         | Public |
+| `GET`  | `/library/{gameTitle}`          | Get detailed game information          | Public |
+| `GET`  | `/library/{gameTitle}/rules`    | Get complete rule documentation        | Public |
+| `GET`  | `/library/{gameTitle}/entities` | Get game entities (cards, units, etc.) | Public |
 
 **Example: List Games**
 
@@ -212,7 +295,8 @@ Response:
       "complexity": 2,
       "thumbnail": "https://cdn.gamerprotocol.io/games/connect-four/thumb.jpg"
     }
-  ]
+  ],
+  "total": 2
 }
 ```
 
@@ -248,6 +332,32 @@ Response:
 }
 ```
 
+**Example: Get Entities**
+
+```http
+GET /v1/library/chess/entities
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "pieces": [
+      { "id": "pawn", "name": "Pawn", "value": 1 },
+      { "id": "knight", "name": "Knight", "value": 3 },
+      { "id": "bishop", "name": "Bishop", "value": 3 },
+      { "id": "rook", "name": "Rook", "value": 5 },
+      { "id": "queen", "name": "Queen", "value": 9 },
+      { "id": "king", "name": "King", "value": 0 }
+    ]
+  },
+  "cacheable": true,
+  "cache_duration_seconds": 3600
+}
+```
+
 ---
 
 ### 3. Authentication
@@ -274,7 +384,8 @@ Content-Type: application/json
   "email": "player@example.com",
   "username": "coolplayer",
   "password": "SecurePass123!",
-  "password_confirmation": "SecurePass123!"
+  "password_confirmation": "SecurePass123!",
+  "client_id": 5
 }
 ```
 
@@ -284,6 +395,37 @@ Response:
 {
   "message": "Registration successful. Please check your email to verify your account.",
   "registration_id": "01J3ABC..."
+}
+```
+
+**Example: Verify Email**
+
+```http
+POST /v1/auth/verify
+X-Client-Key: your-client-key
+Content-Type: application/json
+
+{
+  "token": "verification-token-123",
+  "name": "Cool Player"
+}
+```
+
+Response:
+
+```json
+{
+  "token": "1|abc123xyz789...",
+  "token_type": "Bearer",
+  "expires_in": 31536000,
+  "user": {
+    "username": "coolplayer",
+    "email": "player@example.com",
+    "avatar": null,
+    "level": 1,
+    "xp": 0,
+    "created_at": "2025-11-20T12:00:00Z"
+  }
 }
 ```
 
@@ -305,6 +447,29 @@ Response:
 ```json
 {
   "token": "1|abc123xyz789...",
+  "user": {
+    "username": "coolplayer",
+    "name": "Cool Player",
+    "avatar": "https://cdn.gamerprotocol.io/avatars/default.jpg",
+    "bio": "Competitive gamer",
+    "social_links": null
+  }
+}
+```
+
+**Example: Refresh Token**
+
+```http
+POST /v1/auth/refresh
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "token": "2|def456uvw...",
   "token_type": "Bearer",
   "expires_in": 31536000,
   "user": {
@@ -312,8 +477,7 @@ Response:
     "email": "player@example.com",
     "avatar": "https://cdn.gamerprotocol.io/avatars/default.jpg",
     "level": 1,
-    "xp": 0,
-    "created_at": "2025-11-20T12:00:00Z"
+    "xp": 0
   }
 }
 ```
@@ -333,7 +497,7 @@ User profile, statistics, alerts, and transaction history.
 | `GET`   | `/account/alerts`      | Get user notifications (paginated)    | Bearer + Client Key |
 | `POST`  | `/account/alerts/read` | Mark alerts as read                   | Bearer + Client Key |
 
-**Example: Get Profile**
+**Get Profile:**
 
 ```http
 GET /v1/account/profile
@@ -347,18 +511,160 @@ Response:
 {
   "data": {
     "username": "coolplayer",
-    "email": "player@example.com",
     "name": "Cool Player",
     "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
     "bio": "Competitive gamer and chess enthusiast",
     "social_links": {
       "twitter": "https://twitter.com/coolplayer",
       "twitch": "https://twitch.tv/coolplayer"
-    },
-    "level": 15,
-    "total_xp": 4500,
-    "member_since": "2025-01-15T10:00:00Z"
+    }
   }
+}
+```
+
+**Update Profile:**
+
+```http
+PATCH /v1/account/profile
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+Content-Type: application/json
+
+{
+  "name": "Cool Player Updated",
+  "username": "new_username",
+  "bio": "New bio text",
+  "social_links": {
+    "twitter": "https://twitter.com/newhandle"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "username": "new_username",
+    "name": "Cool Player Updated",
+    "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
+    "bio": "New bio text",
+    "social_links": {
+      "twitter": "https://twitter.com/newhandle",
+      "twitch": "https://twitch.tv/coolplayer"
+    }
+  },
+  "message": "Profile updated successfully"
+}
+```
+
+**Get Progression:**
+
+```http
+GET /v1/account/progression
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "level": 1,
+    "experience_points": 0,
+    "next_level_xp": null,
+    "progress_to_next_level": 0,
+    "titles": [],
+    "active_title": null,
+    "badges": [],
+    "achievements": [],
+    "milestones": []
+  }
+}
+```
+
+**Get Records:**
+
+```http
+GET /v1/account/records
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "total_games": 150,
+    "games_won": 85,
+    "games_lost": 60,
+    "games_drawn": 5,
+    "win_rate": 0.56,
+    "current_streak": 3,
+    "longest_win_streak": 12,
+    "total_points": 12500,
+    "elo_ratings": {
+      "chess": 1450,
+      "connect-four": 1200
+    },
+    "global_rank": 452,
+    "games_by_title": [],
+    "favorite_game": null
+  }
+}
+```
+
+**Get Alerts:**
+
+```http
+GET /v1/account/alerts?page=1&per_page=20
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "ulid": "01J3ALT...",
+      "type": "game_invite",
+      "data": {
+        "lobby_id": "01J3LOB..."
+      },
+      "read_at": null,
+      "created_at": "2025-11-22T15:30:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 1
+  }
+}
+```
+
+**Mark Alerts as Read:**
+
+```http
+POST /v1/account/alerts/read
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+Content-Type: application/json
+
+{
+  "alert_ulids": ["01J3ALT..."]
+}
+```
+
+Response:
+
+```json
+{
+  "message": "1 alert marked as read."
 }
 ```
 
@@ -370,10 +676,10 @@ Matchmaking system including queue, lobbies, and proposals (challenges/rematches
 
 #### Queue Endpoints
 
-| Method   | Endpoint                    | Purpose                | Auth                |
-| -------- | --------------------------- | ---------------------- | ------------------- |
-| `POST`   | `/matchmaking/queue`        | Join matchmaking queue | Bearer + Client Key |
-| `DELETE` | `/matchmaking/queue/{ulid}` | Leave queue            | Bearer + Client Key |
+| Method   | Endpoint                         | Purpose                | Auth                |
+| -------- | -------------------------------- | ---------------------- | ------------------- |
+| `POST`   | `/matchmaking/queue`             | Join matchmaking queue | Bearer + Client Key |
+| `DELETE` | `/matchmaking/queue/{slot:ulid}` | Leave queue            | Bearer + Client Key |
 
 **Join Queue:**
 
@@ -387,7 +693,9 @@ Content-Type: application/json
   "game_title": "connect-four",
   "mode_id": 1,
   "skill_rating": 1500,
-  "preferences": {}
+  "preferences": {
+    "game_mode": "blitz"
+  }
 }
 ```
 
@@ -397,11 +705,19 @@ Response:
 {
   "data": {
     "ulid": "01J3ABC...",
-    "game_title": "connect-four",
+    "username": "coolplayer",
+    "title_slug": "connect-four",
     "mode_id": 1,
+    "game_mode": "blitz",
+    "skill_rating": 1500,
     "status": "active",
+    "preferences": {
+      "game_mode": "blitz"
+    },
+    "expires_at": "2025-11-22T12:30:00Z",
     "created_at": "2025-11-22T12:00:00Z"
-  }
+  },
+  "message": "Queue slot created"
 }
 ```
 
@@ -413,19 +729,41 @@ Authorization: Bearer 1|abc123...
 X-Client-Key: your-client-key
 ```
 
+Response:
+
+```json
+{
+  "data": {
+    "ulid": "01J3ABC...",
+    "username": "coolplayer",
+    "title_slug": "connect-four",
+    "mode_id": 1,
+    "game_mode": "blitz",
+    "skill_rating": 1500,
+    "status": "cancelled",
+    "preferences": {
+      "game_mode": "blitz"
+    },
+    "expires_at": "2025-11-22T12:30:00Z",
+    "created_at": "2025-11-22T12:00:00Z"
+  },
+  "message": "Queue slot cancelled"
+}
+```
+
 #### Lobby Endpoints
 
-| Method   | Endpoint                                         | Purpose                          | Auth                |
-| -------- | ------------------------------------------------ | -------------------------------- | ------------------- |
-| `GET`    | `/matchmaking/lobbies`                           | List public lobbies              | Bearer + Client Key |
-| `POST`   | `/matchmaking/lobbies`                           | Create new lobby                 | Bearer + Client Key |
-| `GET`    | `/matchmaking/lobbies/{ulid}`                    | Get lobby details                | Bearer + Client Key |
-| `DELETE` | `/matchmaking/lobbies/{ulid}`                    | Cancel lobby (host only)         | Bearer + Client Key |
-| `POST`   | `/matchmaking/lobbies/{ulid}/ready-check`        | Initiate ready check (host only) | Bearer + Client Key |
-| `POST`   | `/matchmaking/lobbies/{ulid}/seat`               | Seat players (host only)         | Bearer + Client Key |
-| `POST`   | `/matchmaking/lobbies/{ulid}/players`            | Invite players (host only)       | Bearer + Client Key |
-| `PUT`    | `/matchmaking/lobbies/{ulid}/players/{username}` | Accept/join lobby                | Bearer + Client Key |
-| `DELETE` | `/matchmaking/lobbies/{ulid}/players/{username}` | Kick player (host only)          | Bearer + Client Key |
+| Method   | Endpoint                                               | Purpose                          | Auth                |
+| -------- | ------------------------------------------------------ | -------------------------------- | ------------------- |
+| `GET`    | `/matchmaking/lobbies`                                 | List public lobbies              | Bearer + Client Key |
+| `POST`   | `/matchmaking/lobbies`                                 | Create new lobby                 | Bearer + Client Key |
+| `GET`    | `/matchmaking/lobbies/{lobby:ulid}`                    | Get lobby details                | Bearer + Client Key |
+| `DELETE` | `/matchmaking/lobbies/{lobby:ulid}`                    | Cancel lobby (host only)         | Bearer + Client Key |
+| `POST`   | `/matchmaking/lobbies/{lobby:ulid}/ready-check`        | Initiate ready check (host only) | Bearer + Client Key |
+| `POST`   | `/matchmaking/lobbies/{lobby:ulid}/seat`               | Seat players (host only)         | Bearer + Client Key |
+| `POST`   | `/matchmaking/lobbies/{lobby:ulid}/players`            | Invite players (host only)       | Bearer + Client Key |
+| `PUT`    | `/matchmaking/lobbies/{lobby:ulid}/players/{username}` | Accept/join lobby                | Bearer + Client Key |
+| `DELETE` | `/matchmaking/lobbies/{lobby:ulid}/players/{username}` | Kick player (host only)          | Bearer + Client Key |
 
 **Create Lobby:**
 
@@ -451,36 +789,32 @@ Response:
 {
   "data": {
     "ulid": "01J3DEF...",
-    "host": {
-      "id": 123,
-      "username": "coolplayer"
-    },
     "game_title": "hearts",
-    "mode": {
-      "id": 2,
-      "slug": "standard",
-      "name": "Standard"
+    "game_mode": "standard",
+    "host": {
+      "username": "coolplayer",
+      "name": "Cool Player",
+      "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
+      "bio": "Competitive gamer",
+      "social_links": null
     },
-    "is_public": true,
     "min_players": 4,
-    "status": "pending",
+    "current_players": 1,
+    "is_public": true,
     "scheduled_at": "2025-11-22T20:00:00Z",
+    "status": "pending",
     "players": [
       {
-        "user_id": 123,
         "username": "coolplayer",
+        "name": "Cool Player",
+        "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
         "status": "accepted",
-        "source": "host"
-      },
-      {
-        "user_id": 456,
-        "username": "player2",
-        "status": "pending",
-        "source": "invited"
+        "invited_at": null,
+        "joined_at": "2025-11-22T12:00:00Z"
       }
-    ],
-    "created_at": "2025-11-22T12:00:00Z"
-  }
+    ]
+  },
+  "message": "Lobby created successfully"
 }
 ```
 
@@ -507,11 +841,11 @@ Content-Type: application/json
 
 #### Proposal Endpoints (Challenges & Rematches)
 
-| Method | Endpoint                                | Purpose                     | Auth                |
-| ------ | --------------------------------------- | --------------------------- | ------------------- |
-| `POST` | `/matchmaking/proposals`                | Create rematch or challenge | Bearer + Client Key |
-| `POST` | `/matchmaking/proposals/{ulid}/accept`  | Accept proposal             | Bearer + Client Key |
-| `POST` | `/matchmaking/proposals/{ulid}/decline` | Decline proposal            | Bearer + Client Key |
+| Method | Endpoint                                         | Purpose                     | Auth                |
+| ------ | ------------------------------------------------ | --------------------------- | ------------------- |
+| `POST` | `/matchmaking/proposals`                         | Create rematch or challenge | Bearer + Client Key |
+| `POST` | `/matchmaking/proposals/{proposal:ulid}/accept`  | Accept proposal             | Bearer + Client Key |
+| `POST` | `/matchmaking/proposals/{proposal:ulid}/decline` | Decline proposal            | Bearer + Client Key |
 
 **Request Rematch:**
 
@@ -523,8 +857,7 @@ Content-Type: application/json
 
 {
   "type": "rematch",
-  "game_id": "01J3GAME123",
-  "message": "Good game, rematch?"
+  "original_game_ulid": "01J3GAME123"
 }
 ```
 
@@ -537,11 +870,11 @@ X-Client-Key: your-client-key
 Content-Type: application/json
 
 {
-  "type": "challenge",
+  "type": "casual",
   "opponent_username": "player2",
-  "game_title": "checkers",
+  "title_slug": "checkers",
   "mode_id": 3,
-  "message": "Let's play!"
+  "game_settings": {}
 }
 ```
 
@@ -551,21 +884,19 @@ Response:
 {
   "data": {
     "ulid": "01J3PROP...",
-    "type": "challenge",
-    "requester": {
-      "id": 123,
-      "username": "coolplayer"
-    },
-    "recipient": {
-      "id": 456,
-      "username": "player2"
-    },
-    "game_title": "checkers",
+    "requesting_username": "coolplayer",
+    "opponent_username": "player2",
+    "type": "casual",
+    "title_slug": "checkers",
     "mode_id": 3,
+    "game_settings": {},
     "status": "pending",
+    "responded_at": null,
     "expires_at": "2025-11-22T12:01:00Z",
-    "created_at": "2025-11-22T12:00:00Z"
-  }
+    "original_game_ulid": null,
+    "game_ulid": null
+  },
+  "message": "Proposal sent successfully"
 }
 ```
 
@@ -577,23 +908,47 @@ Authorization: Bearer 1|abc123...
 X-Client-Key: your-client-key
 ```
 
+Response:
+
+```json
+{
+  "data": {
+    "ulid": "01J3PROP...",
+    "requesting_username": "coolplayer",
+    "opponent_username": "player2",
+    "type": "casual",
+    "title_slug": "checkers",
+    "mode_id": 3,
+    "game_settings": {},
+    "status": "accepted",
+    "responded_at": "2025-11-22T12:00:30Z",
+    "expires_at": "2025-11-22T12:01:00Z",
+    "original_game_ulid": null,
+    "game_ulid": null,
+    "new_game_ulid": "01J3NEWGAME..."
+  },
+  "message": "Proposal accepted. New game created."
+}
+```
+
 ---
 
 ### 6. Active Games
 
 Game state, action submission, and game lifecycle management.
 
-| Method | Endpoint                | Purpose                             | Auth                |
-| ------ | ----------------------- | ----------------------------------- | ------------------- |
-| `GET`  | `/games`                | List user's active and recent games | Bearer + Client Key |
-| `GET`  | `/games/{ulid}`         | Get current game state              | Bearer + Client Key |
-| `POST` | `/games/{ulid}/actions` | Submit game action (idempotent)     | Bearer + Client Key |
-| `GET`  | `/games/{ulid}/actions` | Get complete action history         | Bearer + Client Key |
-| `GET`  | `/games/{ulid}/options` | Get valid actions for current turn  | Bearer + Client Key |
-| `POST` | `/games/{ulid}/concede` | Concede game                        | Bearer + Client Key |
-| `POST` | `/games/{ulid}/abandon` | Abandon game (higher penalty)       | Bearer + Client Key |
-| `GET`  | `/games/{ulid}/outcome` | Get game outcome and results        | Bearer + Client Key |
-| `POST` | `/games/{ulid}/sync`    | Sync game state (recovery)          | Bearer + Client Key |
+| Method | Endpoint                     | Purpose                             | Auth                |
+| ------ | ---------------------------- | ----------------------------------- | ------------------- |
+| `GET`  | `/games`                     | List user's active and recent games | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}`         | Get current game state              | Bearer + Client Key |
+| `POST` | `/games/{game:ulid}/actions` | Submit game action (idempotent)     | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}/actions` | Get complete action history         | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}/options` | Get valid actions for current turn  | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}/timer`   | Get current timer information       | Bearer + Client Key |
+| `POST` | `/games/{game:ulid}/concede` | Concede game                        | Bearer + Client Key |
+| `POST` | `/games/{game:ulid}/abandon` | Abandon game (higher penalty)       | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}/outcome` | Get game outcome and results        | Bearer + Client Key |
+| `GET`  | `/games/{game:ulid}/sync`    | Sync game state (recovery)          | Bearer + Client Key |
 
 **List Games:**
 
@@ -610,22 +965,32 @@ Response:
   "data": [
     {
       "ulid": "01J3GAME...",
-      "title": "Connect Four",
-      "mode": "Standard",
+      "game_title": "connect-four",
       "status": "active",
-      "current_turn": "01J3PLY1...",
+      "turn_number": 5,
+      "winner_id": null,
       "players": [
         {
           "ulid": "01J3PLY1...",
           "username": "coolplayer",
-          "is_current_turn": true
+          "name": "Cool Player",
+          "position_id": 0,
+          "color": "red",
+          "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg"
         },
         {
           "ulid": "01J3PLY2...",
           "username": "opponent",
-          "is_current_turn": false
+          "name": "Opponent Player",
+          "position_id": 1,
+          "color": "yellow",
+          "avatar": "https://cdn.gamerprotocol.io/avatars/user456.jpg"
         }
       ],
+      "game_state": {
+        "board": [[null, null, null, null, null, null, null], ...],
+        "move_count": 5
+      },
       "created_at": "2025-11-22T12:00:00Z",
       "updated_at": "2025-11-22T12:05:00Z"
     }
@@ -652,29 +1017,29 @@ Response:
 {
   "data": {
     "ulid": "01J3GAME...",
-    "title": "Connect Four",
-    "mode": "Standard",
+    "game_title": "connect-four",
     "status": "active",
-    "current_turn": "01J3PLY1...",
+    "turn_number": 5,
+    "winner_id": null,
     "players": [
       {
         "ulid": "01J3PLY1...",
-        "user_id": 123,
         "username": "coolplayer",
+        "name": "Cool Player",
+        "position_id": 0,
         "color": "red",
-        "is_current_turn": true,
-        "is_winner": false
+        "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg"
       },
       {
         "ulid": "01J3PLY2...",
-        "user_id": 456,
         "username": "opponent",
+        "name": "Opponent Player",
+        "position_id": 1,
         "color": "yellow",
-        "is_current_turn": false,
-        "is_winner": false
+        "avatar": "https://cdn.gamerprotocol.io/avatars/user456.jpg"
       }
     ],
-    "state": {
+    "game_state": {
       "board": [[null, null, null, null, null, null, null], ...],
       "move_count": 5,
       "last_move": {
@@ -699,28 +1064,44 @@ Content-Type: application/json
 Idempotency-Key: unique-request-id-123
 
 {
-  "action": "DROP_PIECE",
-  "parameters": {
+  "action_type": "DROP_PIECE",
+  "action_details": {
     "column": 3
   }
 }
 ```
 
-Response (202 Accepted - action queued):
+Response:
 
 ```json
 {
   "data": {
-    "action_id": "01J3ACT...",
-    "game_ulid": "01J3GAME...",
-    "player_ulid": "01J3PLY1...",
-    "action": "DROP_PIECE",
-    "parameters": {
-      "column": 3
+    "success": true,
+    "action": {
+      "ulid": "01J3ACT...",
+      "summary": "Player dropped piece in column 3"
     },
-    "status": "queued",
-    "created_at": "2025-11-22T12:05:30Z"
-  }
+    "game": {
+      "ulid": "01J3GAME...",
+      "status": "active",
+      "game_state": {
+        "board": [[null, null, null, null, null, null, null], ...],
+        "move_count": 6
+      },
+      "winner_ulid": null,
+      "is_draw": false,
+      "outcome_type": null,
+      "outcome_details": null
+    },
+    "context": {
+      "state_changes": [],
+      "available_actions": []
+    },
+    "outcome": null,
+    "next_action_deadline": "2025-11-22T12:06:30Z",
+    "timeout": null
+  },
+  "message": "Action applied successfully"
 }
 ```
 
@@ -737,14 +1118,18 @@ Response:
 ```json
 {
   "data": {
-    "actions": [
+    "options": [
       {
         "action": "DROP_PIECE",
         "valid_parameters": {
           "column": [0, 1, 2, 3, 4, 5, 6]
         }
       }
-    ]
+    ],
+    "is_your_turn": true,
+    "phase": "active",
+    "deadline": "2025-11-22T12:06:00Z",
+    "timelimit_seconds": 300
   }
 }
 ```
@@ -763,18 +1148,20 @@ Response:
 {
   "data": [
     {
-      "action_id": "01J3ACT001",
-      "player": "01J3PLY1...",
-      "action": "DROP_PIECE",
-      "parameters": { "column": 3 },
-      "timestamp": "2025-11-22T12:01:00Z"
-    },
-    {
-      "action_id": "01J3ACT002",
-      "player": "01J3PLY2...",
-      "action": "DROP_PIECE",
-      "parameters": { "column": 2 },
-      "timestamp": "2025-11-22T12:02:00Z"
+      "ulid": "01J3ACT001",
+      "turn_number": 1,
+      "action_type": "DROP_PIECE",
+      "action_details": { "column": 3 },
+      "player": {
+        "ulid": "01J3PLY1...",
+        "username": "coolplayer",
+        "name": "Cool Player",
+        "position_id": 0,
+        "color": "red",
+        "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg"
+      },
+      "status": "processed",
+      "created_at": "2025-11-22T12:01:00Z"
     }
   ]
 }
@@ -792,13 +1179,7 @@ Response:
 
 ```json
 {
-  "data": {
-    "game_ulid": "01J3GAME...",
-    "status": "completed",
-    "outcome": "conceded",
-    "winner": "01J3PLY2...",
-    "completed_at": "2025-11-22T12:10:00Z"
-  }
+  "message": "Game conceded successfully"
 }
 ```
 
@@ -817,14 +1198,17 @@ Response:
   "data": {
     "game_ulid": "01J3GAME...",
     "status": "completed",
-    "outcome": "win",
+    "outcome_type": "win",
     "winner": {
       "ulid": "01J3PLY1...",
       "username": "coolplayer"
     },
-    "result_type": "connect_four",
+    "is_draw": false,
+    "completed_at": "2025-11-22T12:10:00Z",
     "duration_seconds": 300,
-    "completed_at": "2025-11-22T12:10:00Z"
+    "final_scores": [],
+    "xp_awarded": [],
+    "rewards": []
   }
 }
 ```
@@ -870,11 +1254,14 @@ Response (shows balance for the authenticated client):
 ```json
 {
   "data": {
-    "client_id": 5,
-    "client_name": "MyGameApp",
-    "tokens": 500.0,
-    "chips": 250.0,
-    "locked_in_games": 50.0
+    "tokens": {
+      "amount": 500.0,
+      "currency_type": "tokens"
+    },
+    "chips": {
+      "amount": 250.0,
+      "currency_type": "chips"
+    }
   }
 }
 ```
@@ -888,10 +1275,11 @@ X-Client-Key: your-approved-client-key
 Content-Type: application/json
 
 {
-  "action": "add",
+  "user_id": 123,
+  "currency_type": "tokens",
   "amount": 100.00,
-  "currency": "tokens",
-  "reference": "purchase_receipt_xyz"
+  "description": "Daily bonus",
+  "metadata": {}
 }
 ```
 
@@ -900,15 +1288,10 @@ Response:
 ```json
 {
   "data": {
-    "ulid": "01J3EFG...",
-    "client_id": 5,
-    "action": "add",
-    "amount": 100.0,
-    "currency": "tokens",
-    "reference": "purchase_receipt_xyz",
-    "source": "cashier",
-    "created_at": "2025-11-20T12:00:00Z"
-  }
+    "transaction_ulid": "01J3EFG...",
+    "new_balance": 600.0
+  },
+  "message": "Balance adjusted successfully"
 }
 ```
 
@@ -947,42 +1330,33 @@ Response includes both types:
   "data": [
     {
       "ulid": "01J3ABC...",
-      "type": "balance_add",
+      "transaction_type": "credit",
+      "currency_type": "tokens",
       "amount": 100.0,
-      "currency": "tokens",
-      "client_id": 5,
-      "client_name": "MyGameApp",
-      "reference": "purchase_receipt_xyz",
-      "subscription_id": null,
+      "description": "Daily bonus",
+      "metadata": [],
+      "reference_id": null,
+      "reference_type": null,
       "created_at": "2025-11-20T12:00:00Z"
     },
     {
       "ulid": "01J3DEF...",
-      "type": "subscription_payment",
+      "transaction_type": "payment",
+      "currency_type": "usd",
       "amount": 9.99,
-      "currency": "usd",
-      "subscription_id": 42,
-      "payment_provider": "stripe",
-      "provider_transaction_id": "pi_1234567890",
-      "payment_status": "completed",
+      "description": "Pro Subscription",
+      "metadata": {
+        "provider": "stripe"
+      },
+      "reference_id": "pi_1234567890",
+      "reference_type": "payment_intent",
       "created_at": "2025-11-20T11:30:00Z"
-    },
-    {
-      "ulid": "01J3GHI...",
-      "type": "iap_purchase",
-      "amount": 4.99,
-      "currency": "usd",
-      "subscription_id": 42,
-      "payment_provider": "google_play",
-      "provider_transaction_id": "GPA.1234-5678-9012",
-      "payment_status": "completed",
-      "created_at": "2025-11-19T10:15:00Z"
     }
   ],
   "meta": {
     "current_page": 1,
     "per_page": 50,
-    "total": 3
+    "total": 2
   }
 }
 ```
@@ -1013,14 +1387,14 @@ Response includes both types:
 
 Real-time Server-Sent Events (SSE) streams for live platform activity.
 
-| Method | Endpoint              | Purpose                     | Auth                |
-| ------ | --------------------- | --------------------------- | ------------------- |
-| `GET`  | `/feeds/games`        | Stream public game activity | Bearer + Client Key |
-| `GET`  | `/feeds/wins`         | Stream win announcements    | Bearer + Client Key |
-| `GET`  | `/feeds/leaderboards` | Stream leaderboard updates  | Bearer + Client Key |
-| `GET`  | `/feeds/tournaments`  | Stream tournament progress  | Bearer + Client Key |
-| `GET`  | `/feeds/challenges`   | Stream challenge activity   | Bearer + Client Key |
-| `GET`  | `/feeds/achievements` | Stream achievement unlocks  | Bearer + Client Key |
+| Method | Endpoint                          | Purpose                     | Auth                |
+| ------ | --------------------------------- | --------------------------- | ------------------- |
+| `GET`  | `/feeds/games`                    | Stream public game activity | Bearer + Client Key |
+| `GET`  | `/feeds/wins`                     | Stream win announcements    | Bearer + Client Key |
+| `GET`  | `/feeds/leaderboards/{gameTitle}` | Get leaderboard (JSON)      | Bearer + Client Key |
+| `GET`  | `/feeds/tournaments`              | Stream tournament progress  | Bearer + Client Key |
+| `GET`  | `/feeds/challenges`               | Stream challenge activity   | Bearer + Client Key |
+| `GET`  | `/feeds/achievements`             | Stream achievement unlocks  | Bearer + Client Key |
 
 All feed endpoints support query parameters for filtering.
 
@@ -1040,20 +1414,137 @@ gamesSource.addEventListener('game-update', (event) => {
 });
 ```
 
+**Example: Get Leaderboard**
+
+```http
+GET /v1/feeds/leaderboards/chess
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "game_title": "chess",
+    "entries": [
+      {
+        "rank": 1,
+        "username": "grandmaster1",
+        "rating": 2800,
+        "wins": 150,
+        "losses": 10
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ### 9. Competitions
 
 Tournament management, brackets, and standings.
 
-| Method | Endpoint                         | Purpose                     | Auth                |
-| ------ | -------------------------------- | --------------------------- | ------------------- |
-| `GET`  | `/competitions`                  | List active tournaments     | Bearer + Client Key |
-| `GET`  | `/competitions/{ulid}`           | Get tournament details      | Bearer + Client Key |
-| `POST` | `/competitions/{ulid}/enter`     | Register for tournament     | Bearer + Client Key |
-| `GET`  | `/competitions/{ulid}/structure` | Get tournament format rules | Bearer + Client Key |
-| `GET`  | `/competitions/{ulid}/bracket`   | Get tournament bracket      | Bearer + Client Key |
-| `GET`  | `/competitions/{ulid}/standings` | Get current standings       | Bearer + Client Key |
+| Method | Endpoint                                    | Purpose                     | Auth                |
+| ------ | ------------------------------------------- | --------------------------- | ------------------- |
+| `GET`  | `/competitions`                             | List active tournaments     | Bearer + Client Key |
+| `GET`  | `/competitions/{tournament:ulid}`           | Get tournament details      | Bearer + Client Key |
+| `POST` | `/competitions/{tournament:ulid}/enter`     | Register for tournament     | Bearer + Client Key |
+| `GET`  | `/competitions/{tournament:ulid}/structure` | Get tournament format rules | Bearer + Client Key |
+| `GET`  | `/competitions/{tournament:ulid}/bracket`   | Get tournament bracket      | Bearer + Client Key |
+| `GET`  | `/competitions/{tournament:ulid}/standings` | Get current standings       | Bearer + Client Key |
+
+**List Competitions:**
+
+```http
+GET /v1/competitions
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "ulid": "01J3TOUR...",
+      "name": "Weekly Chess Open",
+      "game_title": "chess",
+      "format": "single_elimination",
+      "status": "registration_open",
+      "max_participants": 64,
+      "current_participants": 12,
+      "buy_in_amount": 100,
+      "buy_in_currency": "tokens",
+      "prize_pool": 1000,
+      "rules": {},
+      "starts_at": "2025-11-25T18:00:00Z",
+      "ends_at": "2025-11-25T22:00:00Z",
+      "created_at": "2025-11-20T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 1
+  }
+}
+```
+
+**Enter Tournament:**
+
+```http
+POST /v1/competitions/01J3TOUR.../enter
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "tournament_ulid": "01J3TOUR..."
+  },
+  "message": "Successfully entered tournament"
+}
+```
+
+**Get Bracket:**
+
+```http
+GET /v1/competitions/01J3TOUR.../bracket
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "tournament_ulid": "01J3TOUR...",
+    "format": "single_elimination",
+    "rounds": [
+      {
+        "round_number": 1,
+        "matches": [
+          {
+            "match_id": "01J3MATCH...",
+            "player1": "user1",
+            "player2": "user2",
+            "winner": null
+          }
+        ]
+      }
+    ],
+    "current_round": 1
+  }
+}
+```
 
 ---
 
@@ -1367,5 +1858,5 @@ The platform uses **Laravel Broadcasting** with **Pusher-compatible channels** f
 
 ---
 
-**Last Updated**: November 20, 2025  
+**Last Updated**: December 1, 2025  
 **API Version**: v1.0.0

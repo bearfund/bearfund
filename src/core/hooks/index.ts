@@ -17,52 +17,111 @@ export {
   useSocialLogin,
   useRegister,
   useVerifyEmail,
+  useRefreshToken,
   useLogout,
-  useUserQuery,
-  useUpdateProfile,
 } from './useAuth';
+
+export {
+  useProfileQuery,
+  useUpdateProfile,
+  useProgressionQuery,
+  useRecordsQuery,
+  useAlertsQuery,
+  useMarkAlertsRead,
+} from './useAccount';
+
+/**
+ * System & Library Hooks
+ *
+ * React Query hooks for system health, configuration, feedback, and game library.
+ */
+export {
+  useHealthQuery,
+  useTimeQuery,
+  useConfigQuery,
+  useSubmitFeedback,
+  useLibraryQuery,
+  useGameTitleQuery,
+  useGameRulesQuery,
+  useGameEntitiesQuery,
+} from './useSystem';
 
 /**
  * Game Management Hooks
  *
- * React Query hooks for game operations, lobbies, matchmaking, and rematch.
+ * React Query hooks for game operations.
  * All query hooks disable automatic refetching - use real-time hooks for live updates.
  */
 export {
   useGameQuery,
   useGamesQuery,
   useGameOptions,
-  useGameHistory,
+  useGameActionsQuery,
   useGameAction,
-  useForfeitGame,
-  useLobbiesQuery,
-  useLobbyQuery,
-  useCreateLobby,
-  useJoinLobby,
-  useUpdateLobbyPlayer,
-  useRemoveLobbyPlayer,
-  useDeleteLobby,
-  useStartReadyCheck,
-  useJoinQuickplay,
-  useLeaveQuickplay,
-  useAcceptQuickplay,
-  useRequestRematch,
-  useAcceptRematch,
-  useDeclineRematch,
+  useGameOutcome,
+  useConcedeGame,
+  useAbandonGame,
+  useForfeitGame, // Deprecated: use useConcedeGame
 } from './useGame';
 
 /**
- * Billing & Subscription Hooks
+ * Matchmaking Hooks
  *
- * React Query hooks for subscription management and platform-specific billing.
+ * React Query hooks for matchmaking operations including queue, lobbies, and proposals.
+ * All query hooks disable automatic refetching - use real-time hooks for live updates.
  */
 export {
+  useJoinQueue,
+  useLeaveQueue,
+  useLobbiesQuery,
+  useLobbyQuery,
+  useCreateLobby,
+  useDeleteLobby,
+  useStartReadyCheck,
+  useSeatPlayers,
+  useInvitePlayers,
+  useJoinLobby,
+  useRemoveLobbyPlayer,
+  useCreateProposal,
+  useAcceptProposal,
+  useDeclineProposal,
+} from './useMatchmaking';
+
+/**
+ * Data Feed Hooks
+ *
+ * React Query hooks for leaderboards and real-time data feeds.
+ */
+export { useLeaderboardQuery } from './useFeed';
+
+/**
+ * Competition Hooks
+ *
+ * React Query hooks for tournaments, brackets, and standings.
+ */
+export {
+  useCompetitionsQuery,
+  useTournamentQuery,
+  useEnterTournament,
+  useTournamentStructureQuery,
+  useTournamentBracketQuery,
+  useTournamentStandingsQuery,
+} from './useCompetition';
+
+/**
+ * Economy & Transaction Hooks
+ *
+ * React Query hooks for virtual balance management, transactions, and subscriptions.
+ */
+export {
+  useBalanceQuery,
+  useTransactionsQuery,
+  useCashier,
   usePlansQuery,
-  useSubscriptionStatus,
-  useQuotas,
+  useSubscriptionQuery,
   useSubscribe,
-  useCustomerPortal,
+  useCancelSubscription,
   useVerifyAppleReceipt,
   useVerifyGoogleReceipt,
   useVerifyTelegramReceipt,
-} from './useBilling';
+} from './useEconomy';
