@@ -58,18 +58,28 @@ export type {
 } from './api.types';
 
 // Game types
+export type { Game, GamePlayer, GameAction, SubmitActionRequest } from './game.types';
+
+// Matchmaking types
 export type {
-  Game,
-  GamePlayer,
-  GameAction,
-  Lobby,
-  LobbyPlayer,
-  GameMode,
-  UserSummary,
-  CreateLobbyRequest,
-  SubmitActionRequest,
+  QueueSlot,
   JoinQueueRequest,
-} from './game.types';
+  QueueSlotResponse,
+  Lobby,
+  LobbyPlayerDetailed,
+  LobbyHost,
+  CreateLobbyRequest,
+  JoinLobbyRequest,
+  SeatPlayersRequest,
+  InvitePlayersRequest,
+  Proposal,
+  CreateRematchRequest,
+  CreateChallengeRequest,
+  CreateProposalRequest,
+  ProposalResponse,
+  AcceptProposalResponse,
+  DeclineProposalResponse,
+} from './matchmaking.types';
 
 // Billing types
 export type {

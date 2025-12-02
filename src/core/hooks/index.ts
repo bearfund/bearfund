@@ -49,7 +49,7 @@ export {
 /**
  * Game Management Hooks
  *
- * React Query hooks for game operations, lobbies, matchmaking, and rematch.
+ * React Query hooks for game operations.
  * All query hooks disable automatic refetching - use real-time hooks for live updates.
  */
 export {
@@ -58,19 +58,30 @@ export {
   useGameOptions,
   useGameAction,
   useForfeitGame,
+} from './useGame';
+
+/**
+ * Matchmaking Hooks
+ *
+ * React Query hooks for matchmaking operations including queue, lobbies, and proposals.
+ * All query hooks disable automatic refetching - use real-time hooks for live updates.
+ */
+export {
+  useJoinQueue,
+  useLeaveQueue,
   useLobbiesQuery,
   useLobbyQuery,
   useCreateLobby,
-  useJoinLobby,
-  useRemoveLobbyPlayer,
   useDeleteLobby,
   useStartReadyCheck,
-  useJoinQuickplay,
-  useLeaveQuickplay,
-  useRequestRematch,
-  useAcceptRematch,
-  useDeclineRematch,
-} from './useGame';
+  useSeatPlayers,
+  useInvitePlayers,
+  useJoinLobby,
+  useRemoveLobbyPlayer,
+  useCreateProposal,
+  useAcceptProposal,
+  useDeclineProposal,
+} from './useMatchmaking';
 
 /**
  * Billing & Subscription Hooks

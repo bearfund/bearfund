@@ -52,18 +52,26 @@ export {
   useGameOptions,
   useGameAction,
   useForfeitGame,
+} from './hooks';
+
+/**
+ * Matchmaking Hooks
+ */
+export {
+  useJoinQueue,
+  useLeaveQueue,
   useLobbiesQuery,
   useLobbyQuery,
   useCreateLobby,
-  useJoinLobby,
-  useRemoveLobbyPlayer,
   useDeleteLobby,
   useStartReadyCheck,
-  useJoinQuickplay,
-  useLeaveQuickplay,
-  useRequestRematch,
-  useAcceptRematch,
-  useDeclineRematch,
+  useSeatPlayers,
+  useInvitePlayers,
+  useJoinLobby,
+  useRemoveLobbyPlayer,
+  useCreateProposal,
+  useAcceptProposal,
+  useDeclineProposal,
 } from './hooks';
 
 /**
