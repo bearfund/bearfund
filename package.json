@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Cross-platform UI components and API client for GamerProtocol.io",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./native": {
       "types": "./dist/native.d.ts",
-      "import": "./dist/native.mjs",
-      "require": "./dist/native.js"
+      "import": "./dist/native.js",
+      "require": "./dist/native.cjs"
     }
   },
   "files": [
@@ -69,7 +69,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.11",
-    "axios": "^1.7.7",
+    "axios": "^1.13.2",
     "laravel-echo": "^2.2.6",
     "pusher-js": "^8.4.0-rc2"
   },
@@ -82,22 +82,22 @@
     "@types/react-native": "^0.73.0",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
-    "@vitest/coverage-v8": "^4.0.13",
-    "@vitest/ui": "^4.0.10",
+    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/ui": "^4.0.14",
     "axios-mock-adapter": "^2.1.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "husky": "^9.1.7",
     "jsdom": "^27.2.0",
-    "knip": "^5.70.1",
+    "knip": "^5.71.0",
     "lint-staged": "^16.2.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-native": "^0.82.1",
     "tsup": "^8.3.0",
-    "typescript": "^5.6.3",
-    "vitest": "^4.0.10"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
