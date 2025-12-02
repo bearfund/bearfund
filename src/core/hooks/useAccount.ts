@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosInstance } from 'axios';
+import type { User } from '../../types/auth.types';
 import type {
-  User,
   UpdateProfileRequest,
   UserProgression,
   UserRecords,
   AlertsResponse,
   MarkAlertsReadRequest,
-} from '../../types/auth.types';
+} from '../../types/account.types';
 import type { ErrorResponse } from '../../types/api.types';
 
 /**

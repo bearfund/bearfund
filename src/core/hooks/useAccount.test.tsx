@@ -12,7 +12,8 @@ import {
   useAlertsQuery,
   useMarkAlertsRead,
 } from './useAccount';
-import type { User, UserProgression, UserRecords, AlertsResponse } from '../../types/auth.types';
+import type { User } from '../../types/auth.types';
+import type { UserProgression, UserRecords, AlertsResponse } from '../../types/account.types';
 
 describe('useAccount hooks', () => {
   let mock: MockAdapter;

@@ -15,6 +15,10 @@ export type {
   RegisterRequest,
   VerifyRequest,
   SocialLoginRequest,
+} from './auth.types';
+
+// Account types
+export type {
   UpdateProfileRequest,
   UserTitle,
   UserBadge,
@@ -27,7 +31,7 @@ export type {
   AlertType,
   AlertsResponse,
   MarkAlertsReadRequest,
-} from './auth.types';
+} from './account.types';
 
 // System types
 export type {
