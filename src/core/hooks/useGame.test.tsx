@@ -7,10 +7,16 @@ import {
   useGameQuery,
   useGamesQuery,
   useGameAction,
-  useForfeitGame,
+  useConcedeGame,
   useGameOptions,
 } from './useGame';
-import type { Game, SubmitActionRequest, PaginatedResponse, ErrorResponse } from '../../types';
+import type {
+  Game,
+  GameListItem,
+  SubmitActionRequest,
+  PaginatedResponse,
+  ErrorResponse,
+} from '../../types';
 
 describe('useGame hooks', () => {
   let apiClient: AxiosInstance;
@@ -36,33 +42,34 @@ describe('useGame hooks', () => {
 
   const mockGame: Game = {
     ulid: '01HQ5X9K3G2YM4N6P7Q8R9S0T1',
-    title: 'Connect Four',
-    mode: 'Standard',
+    game_title: 'connect-four',
     status: 'active',
-    current_turn: '01J3PLY1',
+    turn_number: 5,
+    winner_id: null,
     players: [
       {
-        ulid: '01J3PLY1',
-        user_id: 1,
+        ulid: '01J3PLY1...',
         username: 'player1',
+        name: 'Player One',
+        position_id: 0,
         color: 'red',
-        is_current_turn: true,
-        is_winner: false,
+        avatar: 'https://cdn.gamerprotocol.io/avatars/player1.jpg',
       },
       {
-        ulid: '01J3PLY2',
-        user_id: 2,
+        ulid: '01J3PLY2...',
         username: 'player2',
+        name: 'Player Two',
+        position_id: 1,
         color: 'yellow',
-        is_current_turn: false,
-        is_winner: false,
+        avatar: 'https://cdn.gamerprotocol.io/avatars/player2.jpg',
       },
     ],
-    state: {
+    game_state: {
       board: [
-        [0, 0],
-        [0, 0],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
       ],
+      move_count: 5,
     },
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
@@ -155,7 +162,7 @@ describe('useGame hooks', () => {
 
   describe('useGamesQuery', () => {
     test('fetches games list successfully', async () => {
-      const mockResponse: PaginatedResponse<Game> = {
+      const mockResponse: PaginatedResponse<GameListItem> = {
         data: [mockGame],
         links: mockPaginationLinks,
         meta: {
@@ -184,7 +191,7 @@ describe('useGame hooks', () => {
     });
 
     test('supports status filter parameter', async () => {
-      const mockResponse: PaginatedResponse<Game> = {
+      const mockResponse: PaginatedResponse<GameListItem> = {
         data: [mockGame],
         links: mockPaginationLinks,
         meta: {
@@ -211,7 +218,7 @@ describe('useGame hooks', () => {
     });
 
     test('supports pagination parameters', async () => {
-      const mockResponse: PaginatedResponse<Game> = {
+      const mockResponse: PaginatedResponse<GameListItem> = {
         data: [mockGame],
         links: mockPaginationLinks,
         meta: {
@@ -239,7 +246,7 @@ describe('useGame hooks', () => {
     });
 
     test('handles empty games list', async () => {
-      const mockResponse: PaginatedResponse<Game> = {
+      const mockResponse: PaginatedResponse<GameListItem> = {
         data: [],
         links: mockPaginationLinks,
         meta: {
@@ -279,8 +286,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action: 'place_piece',
-        parameters: { column: 3 },
+        action_type: 'DROP_PIECE',
+        action_details: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
@@ -304,8 +311,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action: 'place_piece',
-        parameters: { column: 3 },
+        action_type: 'DROP_PIECE',
+        action_details: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
@@ -331,8 +338,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action: 'invalid_action',
-        parameters: {},
+        action_type: 'INVALID_ACTION',
+        action_details: {},
       };
 
       result.current.mutate(actionRequest);
@@ -356,8 +363,8 @@ describe('useGame hooks', () => {
       });
 
       const actionRequest: SubmitActionRequest = {
-        action: 'place_piece',
-        parameters: { column: 3 },
+        action_type: 'DROP_PIECE',
+        action_details: { column: 3 },
       };
 
       result.current.mutate(actionRequest);
@@ -368,15 +375,14 @@ describe('useGame hooks', () => {
     });
   });
 
-  describe('useForfeitGame', () => {
-    test('forfeits game successfully', async () => {
-      const forfeitedGame = {
-        ...mockGame,
-        status: 'completed' as const,
+  describe('useConcedeGame', () => {
+    test('concedes game successfully', async () => {
+      const mockResponse = {
+        message: 'Game conceded successfully',
       };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, { data: forfeitedGame });
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, mockResponse);
 
-      const { result } = renderHook(() => useForfeitGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
+      const { result } = renderHook(() => useConcedeGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),
@@ -386,16 +392,16 @@ describe('useGame hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.data.status).toBe('completed');
+      expect(result.current.data?.message).toBe('Game conceded successfully');
     });
 
-    test('invalidates game query on forfeit', async () => {
-      const forfeitedGame = { ...mockGame, status: 'completed' as const };
-      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, { data: forfeitedGame });
+    test('invalidates game query on concede', async () => {
+      const mockResponse = { message: 'Game conceded successfully' };
+      mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(200, mockResponse);
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      const { result } = renderHook(() => useForfeitGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
+      const { result } = renderHook(() => useConcedeGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),
@@ -417,7 +423,7 @@ describe('useGame hooks', () => {
       };
       mock.onPost('/games/01HQ5X9K3G2YM4N6P7Q8R9S0T1/concede').reply(400, errorResponse);
 
-      const { result } = renderHook(() => useForfeitGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
+      const { result } = renderHook(() => useConcedeGame(apiClient, '01HQ5X9K3G2YM4N6P7Q8R9S0T1'), {
         wrapper: ({ children }) => (
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         ),

@@ -8,26 +8,26 @@
  */
 
 /**
- * Player in a game instance
+ * Player in a game instance (full detail)
  */
 export interface GamePlayer {
   /** Unique player identifier in this game context */
   ulid: string;
 
-  /** Internal user ID */
-  user_id: number;
-
   /** Username */
   username: string;
 
-  /** Assigned color/side (optional) */
-  color?: string;
+  /** Display name */
+  name: string;
 
-  /** Whether it is this player's turn */
-  is_current_turn: boolean;
+  /** Position/seat number */
+  position_id: number;
 
-  /** Whether this player won */
-  is_winner: boolean;
+  /** Assigned color/side */
+  color: string;
+
+  /** Avatar URL */
+  avatar: string;
 }
 
 /**
@@ -39,23 +39,55 @@ export interface Game {
   /** Unique game identifier (ULID) */
   ulid: string;
 
-  /** Game title (e.g., 'Connect Four', 'Chess') */
-  title: string;
-
-  /** Game mode (e.g., 'Standard') */
-  mode: string;
+  /** Game title slug (e.g., 'connect-four', 'chess') */
+  game_title: string;
 
   /** Current game status */
   status: 'active' | 'completed' | 'pending';
 
-  /** ULID of player whose turn it is */
-  current_turn: string;
+  /** Current turn number */
+  turn_number: number;
+
+  /** Winner's user ID (null if game not completed or draw) */
+  winner_id: number | null;
 
   /** List of participants */
   players: GamePlayer[];
 
-  /** Game-specific state (board, moves) */
-  state: Record<string, unknown>;
+  /** Game-specific state (board, moves, etc.) */
+  game_state: Record<string, unknown>;
+
+  /** ISO 8601 timestamp when game was created */
+  created_at: string;
+
+  /** ISO 8601 timestamp when game was last updated */
+  updated_at: string;
+}
+
+/**
+ * Minimal game info for lists
+ */
+export interface GameListItem {
+  /** Unique game identifier (ULID) */
+  ulid: string;
+
+  /** Game title slug */
+  game_title: string;
+
+  /** Current game status */
+  status: 'active' | 'completed' | 'pending';
+
+  /** Current turn number */
+  turn_number: number;
+
+  /** Winner's user ID (null if not completed or draw) */
+  winner_id: number | null;
+
+  /** Player info */
+  players: GamePlayer[];
+
+  /** Game-specific state */
+  game_state: Record<string, unknown>;
 
   /** ISO 8601 timestamp when game was created */
   created_at: string;
@@ -70,29 +102,73 @@ export interface Game {
  * Represents a single player action within a game.
  */
 export interface GameAction {
-  /** Unique action identifier */
-  action_id: string;
+  /** Unique action identifier (ULID) */
+  ulid: string;
 
-  /** Game this action belongs to */
-  game_ulid: string;
-
-  /** Player ULID who performed the action */
-  player_ulid: string;
+  /** Turn number when action was performed */
+  turn_number: number;
 
   /** Action type (e.g., 'DROP_PIECE', 'MOVE_PIECE') */
-  action: string;
+  action_type: string;
 
-  /** Action parameters as JSON object */
-  parameters: Record<string, unknown>;
+  /** Action parameters/details as JSON object */
+  action_details: Record<string, unknown>;
+
+  /** Player who performed the action */
+  player: {
+    ulid: string;
+    username: string;
+    name: string;
+    position_id: number;
+    color: string;
+    avatar: string;
+  };
 
   /** Action status */
-  status: 'queued' | 'processed';
+  status: 'processed';
 
   /** ISO 8601 timestamp when action was created */
   created_at: string;
+}
 
-  /** ISO 8601 timestamp when action was processed (optional) */
-  timestamp?: string;
+/**
+ * Action response after submission
+ */
+export interface GameActionResponse {
+  /** Whether action was successful */
+  success: boolean;
+
+  /** Action summary */
+  action: {
+    ulid: string;
+    summary: string;
+  };
+
+  /** Updated game state */
+  game: {
+    ulid: string;
+    status: 'active' | 'completed' | 'pending';
+    game_state: Record<string, unknown>;
+    winner_ulid: string | null;
+    is_draw: boolean;
+    outcome_type: string | null;
+    outcome_details: Record<string, unknown> | null;
+  };
+
+  /** Context and state changes */
+  context: {
+    state_changes: Record<string, unknown>[];
+    available_actions: Record<string, unknown>[];
+  };
+
+  /** Outcome if game completed */
+  outcome: Record<string, unknown> | null;
+
+  /** Next action deadline */
+  next_action_deadline: string;
+
+  /** Timeout information */
+  timeout: Record<string, unknown> | null;
 }
 
 /**
@@ -175,14 +251,75 @@ export interface Lobby {
 }
 
 /**
+ * Game options/valid actions response
+ */
+export interface GameOptions {
+  /** List of available actions with valid parameters */
+  options: Array<{
+    action: string;
+    valid_parameters: Record<string, unknown>;
+  }>;
+
+  /** Whether it's the authenticated user's turn */
+  is_your_turn: boolean;
+
+  /** Current game phase */
+  phase: string;
+
+  /** Turn deadline (ISO 8601) */
+  deadline: string;
+
+  /** Time limit in seconds */
+  timelimit_seconds: number;
+}
+
+/**
+ * Game outcome response
+ */
+export interface GameOutcome {
+  /** Game ULID */
+  game_ulid: string;
+
+  /** Game status */
+  status: 'completed';
+
+  /** Outcome type */
+  outcome_type: 'win' | 'resignation' | 'timeout' | 'draw';
+
+  /** Winner information (null if draw) */
+  winner: {
+    ulid: string;
+    username: string;
+  } | null;
+
+  /** Whether game was a draw */
+  is_draw: boolean;
+
+  /** When game completed (ISO 8601) */
+  completed_at: string;
+
+  /** Game duration in seconds */
+  duration_seconds: number;
+
+  /** Final scores per player */
+  final_scores: unknown[];
+
+  /** XP awarded per player */
+  xp_awarded: unknown[];
+
+  /** Rewards earned */
+  rewards: unknown[];
+}
+
+/**
  * Submit game action request payload.
  */
 export interface SubmitActionRequest {
   /** Action type (e.g., 'DROP_PIECE', 'MOVE_PIECE') */
-  action: string;
+  action_type: string;
 
-  /** Action parameters as JSON object */
-  parameters: Record<string, unknown>;
+  /** Action parameters/details as JSON object */
+  action_details: Record<string, unknown>;
 }
 
 /**

@@ -56,8 +56,12 @@ export {
   useGameQuery,
   useGamesQuery,
   useGameOptions,
+  useGameActionsQuery,
   useGameAction,
-  useForfeitGame,
+  useGameOutcome,
+  useConcedeGame,
+  useAbandonGame,
+  useForfeitGame, // Deprecated: use useConcedeGame
 } from './useGame';
 
 /**

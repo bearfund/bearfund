@@ -58,7 +58,16 @@ export type {
 } from './api.types';
 
 // Game types
-export type { Game, GamePlayer, GameAction, SubmitActionRequest } from './game.types';
+export type {
+  Game,
+  GameListItem,
+  GamePlayer,
+  GameAction,
+  GameActionResponse,
+  GameOptions,
+  GameOutcome,
+  SubmitActionRequest,
+} from './game.types';
 
 // Matchmaking types
 export type {
