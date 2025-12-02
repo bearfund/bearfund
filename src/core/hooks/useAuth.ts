@@ -5,6 +5,7 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   SocialLoginRequest,
   VerifyRequest,
 } from '../../types/auth.types';
@@ -122,14 +123,15 @@ export function useSocialLogin(apiClient: AxiosInstance, authStorage: AuthStorag
  *   email: 'john@example.com',
  *   password: 'SecurePass123!',
  *   password_confirmation: 'SecurePass123!',
+ *   client_id: 5,
  *   name: 'John Doe'
  * });
  * ```
  */
 export function useRegister(apiClient: AxiosInstance) {
-  return useMutation<{ message: string }, ErrorResponse, RegisterRequest>({
+  return useMutation<RegisterResponse, ErrorResponse, RegisterRequest>({
     mutationFn: async (data: RegisterRequest) => {
-      const response = await apiClient.post<{ message: string }>('/auth/register', data);
+      const response = await apiClient.post<RegisterResponse>('/auth/register', data);
       return response.data;
     },
   });
@@ -139,7 +141,8 @@ export function useRegister(apiClient: AxiosInstance) {
  * Email verification hook
  *
  * Validates email verification token, creates user account, and returns
- * authentication token which is stored automatically.
+ * authentication token which is stored automatically. Optionally accepts
+ * a name parameter to set the user's display name during verification.
  *
  * @param apiClient - Configured Axios instance from setupAPIClient
  * @param authStorage - Token storage implementation
@@ -151,7 +154,8 @@ export function useRegister(apiClient: AxiosInstance) {
  *
  * // After user clicks verification link and you extract the token
  * verify({
- *   token: 'verification-token-from-email'
+ *   token: 'verification-token-from-email',
+ *   name: 'John Doe' // Optional
  * });
  * ```
  */
@@ -161,6 +165,43 @@ export function useVerifyEmail(apiClient: AxiosInstance, authStorage: AuthStorag
   return useMutation<AuthResponse, ErrorResponse, VerifyRequest>({
     mutationFn: async (data: VerifyRequest) => {
       const response = await apiClient.post<AuthResponse>('/auth/verify', data);
+      return response.data;
+    },
+    onSuccess: async (data) => {
+      await authStorage.setToken(data.token);
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+}
+
+/**
+ * Token refresh hook
+ *
+ * Refreshes the current authentication token without requiring re-login.
+ * Useful for extending user sessions or updating token permissions.
+ *
+ * @param apiClient - Configured Axios instance from setupAPIClient
+ * @param authStorage - Token storage implementation
+ * @returns React Query mutation for token refresh operation
+ *
+ * @example
+ * ```typescript
+ * const { mutate: refreshToken } = useRefreshToken(apiClient, authStorage);
+ *
+ * refreshToken(undefined, {
+ *   onSuccess: (data) => {
+ *     console.log('Token refreshed:', data.token);
+ *     console.log('New expiration:', data.expires_in);
+ *   }
+ * });
+ * ```
+ */
+export function useRefreshToken(apiClient: AxiosInstance, authStorage: AuthStorage) {
+  const queryClient = useQueryClient();
+
+  return useMutation<AuthResponse, ErrorResponse, void>({
+    mutationFn: async () => {
+      const response = await apiClient.post<AuthResponse>('/auth/refresh');
       return response.data;
     },
     onSuccess: async (data) => {

@@ -132,8 +132,22 @@ export interface RegisterRequest {
   /** Password confirmation (must match password) */
   password_confirmation: string;
 
+  /** Client ID for the application */
+  client_id: number;
+
   /** Display name (optional) */
   name?: string;
+}
+
+/**
+ * Registration response
+ */
+export interface RegisterResponse {
+  /** Success message */
+  message: string;
+
+  /** Registration ULID identifier */
+  registration_id: string;
 }
 
 /**
@@ -142,6 +156,9 @@ export interface RegisterRequest {
 export interface VerifyRequest {
   /** Email verification token from verification email */
   token: string;
+
+  /** Display name (optional, can be set during verification) */
+  name?: string;
 }
 
 /**

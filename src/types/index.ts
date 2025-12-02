@@ -13,6 +13,7 @@ export type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   VerifyRequest,
   SocialLoginRequest,
 } from './auth.types';

@@ -4,7 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { useLogin, useSocialLogin, useRegister, useVerifyEmail, useLogout } from './useAuth';
+import {
+  useLogin,
+  useSocialLogin,
+  useRegister,
+  useVerifyEmail,
+  useRefreshToken,
+  useLogout,
+} from './useAuth';
 import { useProfileQuery, useUpdateProfile } from './useAccount';
 import type { AuthStorage, User } from '../../types/auth.types';
 
@@ -61,6 +68,8 @@ describe('useAuth hooks', () => {
       const token = 'test-auth-token';
       mock.onPost('/auth/login').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -76,7 +85,8 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
-      expect(result.current.data).toEqual({ token, user: mockUser });
+      expect(result.current.data?.token).toBe(token);
+      expect(result.current.data?.user).toEqual(mockUser);
     });
 
     test('handles login failure', async () => {
@@ -102,7 +112,12 @@ describe('useAuth hooks', () => {
 
     test('invalidates user query after successful login', async () => {
       const token = 'test-auth-token';
-      mock.onPost('/auth/login').reply(200, { token, user: mockUser });
+      mock.onPost('/auth/login').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -126,6 +141,8 @@ describe('useAuth hooks', () => {
       const token = 'social-auth-token';
       mock.onPost('/auth/social').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -139,7 +156,8 @@ describe('useAuth hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
-      expect(result.current.data).toEqual({ token, user: mockUser });
+      expect(result.current.data?.token).toBe(token);
+      expect(result.current.data?.user).toEqual(mockUser);
     });
 
     test('handles social login with different providers', async () => {
@@ -148,7 +166,12 @@ describe('useAuth hooks', () => {
       for (const provider of providers) {
         mock.reset();
         const token = `${provider}-token`;
-        mock.onPost('/auth/social').reply(200, { token, user: mockUser });
+        mock.onPost('/auth/social').reply(200, {
+          token,
+          token_type: 'Bearer',
+          expires_in: 31536000,
+          user: mockUser,
+        });
 
         const { result } = renderHook(() => useSocialLogin(apiClient, authStorage), { wrapper });
 
@@ -165,7 +188,8 @@ describe('useAuth hooks', () => {
   describe('useRegister', () => {
     test('successfully registers new user', async () => {
       mock.onPost('/auth/register').reply(200, {
-        message: 'Registration successful. Please check your email.',
+        message: 'Registration successful. Please check your email to verify your account.',
+        registration_id: '01J3ABC123',
       });
 
       const { result } = renderHook(() => useRegister(apiClient), { wrapper });
@@ -175,11 +199,13 @@ describe('useAuth hooks', () => {
         username: 'newuser',
         password: 'password123',
         password_confirmation: 'password123',
+        client_id: 5,
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.message).toContain('email');
+      expect(result.current.data?.registration_id).toBe('01J3ABC123');
     });
 
     test('handles registration validation errors', async () => {
@@ -199,6 +225,7 @@ describe('useAuth hooks', () => {
         username: 'existinguser',
         password: 'password123',
         password_confirmation: 'password123',
+        client_id: 5,
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -210,6 +237,8 @@ describe('useAuth hooks', () => {
       const token = 'verified-token';
       mock.onPost('/auth/verify').reply(200, {
         token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
         user: mockUser,
       });
 
@@ -222,6 +251,25 @@ describe('useAuth hooks', () => {
       expect(authStorage.setToken).toHaveBeenCalledWith(token);
     });
 
+    test('successfully verifies email with optional name parameter', async () => {
+      const token = 'verified-token';
+      mock.onPost('/auth/verify').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: { ...mockUser, name: 'Cool Player' },
+      });
+
+      const { result } = renderHook(() => useVerifyEmail(apiClient, authStorage), { wrapper });
+
+      result.current.mutate({ token: 'verification-token', name: 'Cool Player' });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(authStorage.setToken).toHaveBeenCalledWith(token);
+      expect(result.current.data?.user.name).toBe('Cool Player');
+    });
+
     test('handles invalid verification token', async () => {
       mock.onPost('/auth/verify').reply(400, {
         message: 'Invalid or expired verification token',
@@ -231,6 +279,63 @@ describe('useAuth hooks', () => {
       const { result } = renderHook(() => useVerifyEmail(apiClient, authStorage), { wrapper });
 
       result.current.mutate({ token: 'invalid-token' });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      expect(authStorage.setToken).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('useRefreshToken', () => {
+    test('successfully refreshes token and stores new token', async () => {
+      const newToken = 'refreshed-token';
+      mock.onPost('/auth/refresh').reply(200, {
+        token: newToken,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(authStorage.setToken).toHaveBeenCalledWith(newToken);
+      expect(result.current.data?.token).toBe(newToken);
+      expect(result.current.data?.expires_in).toBe(31536000);
+    });
+
+    test('invalidates user query after successful refresh', async () => {
+      const newToken = 'refreshed-token';
+      mock.onPost('/auth/refresh').reply(200, {
+        token: newToken,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user'] });
+    });
+
+    test('handles refresh token failure', async () => {
+      mock.onPost('/auth/refresh').reply(401, {
+        message: 'Token expired or invalid',
+        error_code: 'INVALID_TOKEN',
+      });
+
+      const { result } = renderHook(() => useRefreshToken(apiClient, authStorage), { wrapper });
+
+      result.current.mutate();
 
       await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -297,7 +402,12 @@ describe('useAuth hooks', () => {
       const token = 'integration-test-token';
 
       // Setup all mocks before starting the flow
-      mock.onPost('/auth/login').reply(200, { token, user: mockUser });
+      mock.onPost('/auth/login').reply(200, {
+        token,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        user: mockUser,
+      });
       mock.onGet('/account/profile').reply(200, { data: mockUser });
       mock
         .onPatch('/account/profile')
