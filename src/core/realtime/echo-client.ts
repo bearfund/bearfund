@@ -116,7 +116,7 @@ export function setupEcho(token: string, config?: EchoConfig): Echo<'pusher'> {
     wsPort: config?.wsPort ?? 6001,
     wssPort: config?.wsPort ?? 6001,
     forceTLS: config?.forceTLS ?? actualHost !== 'localhost',
-    enabledTransports: ['ws', 'wss'] as const,
+    enabledTransports: ['ws', 'wss'] as ['ws', 'wss'],
     disableStats: true,
     authEndpoint: config?.authEndpoint ?? '/broadcasting/auth',
     auth: {
