@@ -15,14 +15,18 @@ export { setupAPIClient } from './api';
 /**
  * Authentication Hooks
  */
+export { useLogin, useSocialLogin, useRegister, useVerifyEmail, useLogout } from './hooks';
+
+/**
+ * Account Management Hooks
+ */
 export {
-  useLogin,
-  useSocialLogin,
-  useRegister,
-  useVerifyEmail,
-  useLogout,
-  useUserQuery,
+  useProfileQuery,
   useUpdateProfile,
+  useProgressionQuery,
+  useRecordsQuery,
+  useAlertsQuery,
+  useMarkAlertsRead,
 } from './hooks';
 
 /**

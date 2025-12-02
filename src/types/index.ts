@@ -16,6 +16,17 @@ export type {
   VerifyRequest,
   SocialLoginRequest,
   UpdateProfileRequest,
+  UserTitle,
+  UserBadge,
+  UserAchievement,
+  UserMilestone,
+  UserProgression,
+  GameStatistic,
+  UserRecords,
+  Alert,
+  AlertType,
+  AlertsResponse,
+  MarkAlertsReadRequest,
 } from './auth.types';
 
 // API types

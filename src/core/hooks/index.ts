@@ -12,15 +12,16 @@
  * React Query hooks for GamerProtocol API authentication operations.
  * All hooks automatically handle token storage and cache management.
  */
+export { useLogin, useSocialLogin, useRegister, useVerifyEmail, useLogout } from './useAuth';
+
 export {
-  useLogin,
-  useSocialLogin,
-  useRegister,
-  useVerifyEmail,
-  useLogout,
-  useUserQuery,
+  useProfileQuery,
   useUpdateProfile,
-} from './useAuth';
+  useProgressionQuery,
+  useRecordsQuery,
+  useAlertsQuery,
+  useMarkAlertsRead,
+} from './useAccount';
 
 /**
  * Game Management Hooks

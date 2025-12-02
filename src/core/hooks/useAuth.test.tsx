@@ -4,15 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import {
-  useLogin,
-  useSocialLogin,
-  useRegister,
-  useVerifyEmail,
-  useLogout,
-  useUserQuery,
-  useUpdateProfile,
-} from './useAuth';
+import { useLogin, useSocialLogin, useRegister, useVerifyEmail, useLogout } from './useAuth';
+import { useProfileQuery, useUpdateProfile } from './useAccount';
 import type { AuthStorage, User } from '../../types/auth.types';
 
 describe('useAuth hooks', () => {
@@ -299,122 +292,6 @@ describe('useAuth hooks', () => {
     });
   });
 
-  describe('useUserQuery', () => {
-    test('successfully fetches user profile', async () => {
-      // API returns { data: User } wrapped in ApiResponse
-      mock.onGet('/account/profile').reply(200, { data: mockUser });
-
-      const { result } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(mockUser);
-    });
-
-    test('handles unauthenticated user (401)', async () => {
-      mock.onGet('/account/profile').reply(401, {
-        message: 'Unauthenticated',
-        error_code: 'UNAUTHENTICATED',
-      });
-
-      const { result } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result.current.isError).toBe(true));
-    });
-
-    test('can be disabled via options', () => {
-      const { result } = renderHook(() => useUserQuery(apiClient, { enabled: false }), { wrapper });
-
-      // Should not fetch when disabled
-      expect(result.current.data).toBeUndefined();
-      expect(result.current.isLoading).toBe(false);
-      expect(mock.history.get.length).toBe(0);
-    });
-
-    test('caches user data correctly', async () => {
-      mock.onGet('/account/profile').reply(200, { data: mockUser });
-
-      const { result: result1 } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      await waitFor(() => expect(result1.current.isSuccess).toBe(true));
-
-      // Second hook should use cached data (or refetch - both are acceptable)
-      const { result: result2 } = renderHook(() => useUserQuery(apiClient), {
-        wrapper,
-      });
-
-      // Data should be available immediately from cache or after fetch
-      await waitFor(() => expect(result2.current.data).toEqual(mockUser));
-
-      // Verify at least one API call was made
-      expect(mock.history.get.length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('useUpdateProfile', () => {
-    test('successfully updates user profile', async () => {
-      const updatedUser = { ...mockUser, bio: 'Updated bio' };
-      mock.onPatch('/account/profile').reply(200, { data: updatedUser });
-
-      const { result } = renderHook(() => useUpdateProfile(apiClient), {
-        wrapper,
-      });
-
-      result.current.mutate({
-        bio: 'Updated bio',
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(updatedUser);
-    });
-
-    test('invalidates user query after successful update', async () => {
-      mock.onPatch('/account/profile').reply(200, { data: mockUser });
-
-      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
-
-      const { result } = renderHook(() => useUpdateProfile(apiClient), {
-        wrapper,
-      });
-
-      result.current.mutate({ name: 'New Name' });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user'] });
-    });
-
-    test('handles partial profile updates', async () => {
-      const updates = [
-        { username: 'newusername' },
-        { name: 'New Name' },
-        { bio: 'New bio' },
-        { avatar: 'https://example.com/new-avatar.jpg' },
-        { social_links: { twitter: 'https://twitter.com/newhandle' } },
-      ];
-
-      for (const update of updates) {
-        mock.reset();
-        mock.onPatch('/account/profile').reply(200, { data: { ...mockUser, ...update } });
-
-        const { result } = renderHook(() => useUpdateProfile(apiClient), {
-          wrapper,
-        });
-
-        result.current.mutate(update);
-
-        await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      }
-    });
-  });
-
   describe('integration: login -> fetch user -> update profile -> logout', () => {
     test('complete authentication flow', async () => {
       const token = 'integration-test-token';
@@ -444,9 +321,12 @@ describe('useAuth hooks', () => {
       authStorage.getToken = vi.fn().mockResolvedValue(token);
 
       // Step 2: Fetch user
-      const { result: userResult } = renderHook(() => useUserQuery(apiClient, { enabled: true }), {
-        wrapper,
-      });
+      const { result: userResult } = renderHook(
+        () => useProfileQuery(apiClient, { enabled: true }),
+        {
+          wrapper,
+        }
+      );
 
       await waitFor(() => expect(userResult.current.isSuccess).toBe(true));
       expect(userResult.current.data).toEqual(mockUser);

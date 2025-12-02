@@ -97,7 +97,7 @@ function LoginForm() {
 }
 
 function UserProfile() {
-  const { data: user, isLoading } = useUserQuery(apiClient);
+  const { data: user, isLoading } = useProfileQuery(apiClient);
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -227,8 +227,15 @@ const apiClient = setupAPIClient({
 - `useRegister(apiClient)` - New user registration
 - `useVerifyEmail(apiClient, authStorage)` - Email verification
 - `useLogout(apiClient, authStorage)` - Logout and clear tokens
-- `useUserQuery(apiClient)` - Fetch current user profile
+
+### Account Management
+
+- `useProfileQuery(apiClient)` - Fetch current user profile
 - `useUpdateProfile(apiClient)` - Update user profile
+- `useProgressionQuery(apiClient)` - Get levels and XP across all games
+- `useRecordsQuery(apiClient)` - Get gameplay records and statistics
+- `useAlertsQuery(apiClient, options)` - Get user notifications (paginated)
+- `useMarkAlertsRead(apiClient)` - Mark alerts as read
 
 ### Games
 
@@ -288,6 +295,18 @@ import type {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
+  // Account
+  UserProgression,
+  UserTitle,
+  UserBadge,
+  UserAchievement,
+  UserMilestone,
+  UserRecords,
+  GameStatistic,
+  Alert,
+  AlertType,
+  AlertsResponse,
+  MarkAlertsReadRequest,
   // API
   ApiResponse,
   PaginatedResponse,
