@@ -686,7 +686,9 @@ Content-Type: application/json
   "game_title": "connect-four",
   "mode_id": 1,
   "skill_rating": 1500,
-  "preferences": {}
+  "preferences": {
+    "game_mode": "blitz"
+  }
 }
 ```
 
@@ -696,11 +698,19 @@ Response:
 {
   "data": {
     "ulid": "01J3ABC...",
-    "game_title": "connect-four",
+    "user_id": 123,
+    "title_slug": "connect-four",
     "mode_id": 1,
+    "game_mode": "blitz",
+    "skill_rating": 1500,
     "status": "active",
+    "preferences": {
+      "game_mode": "blitz"
+    },
+    "expires_at": "2025-11-22T12:30:00Z",
     "created_at": "2025-11-22T12:00:00Z"
-  }
+  },
+  "message": "Queue slot created"
 }
 ```
 
@@ -710,6 +720,28 @@ Response:
 DELETE /v1/matchmaking/queue/01J3ABC...
 Authorization: Bearer 1|abc123...
 X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "ulid": "01J3ABC...",
+    "user_id": 123,
+    "title_slug": "connect-four",
+    "mode_id": 1,
+    "game_mode": "blitz",
+    "skill_rating": 1500,
+    "status": "cancelled",
+    "preferences": {
+      "game_mode": "blitz"
+    },
+    "expires_at": "2025-11-22T12:30:00Z",
+    "created_at": "2025-11-22T12:00:00Z"
+  },
+  "message": "Queue slot cancelled"
+}
 ```
 
 #### Lobby Endpoints
@@ -750,36 +782,32 @@ Response:
 {
   "data": {
     "ulid": "01J3DEF...",
-    "host": {
-      "id": 123,
-      "username": "coolplayer"
-    },
     "game_title": "hearts",
-    "mode": {
-      "id": 2,
-      "slug": "standard",
-      "name": "Standard"
+    "game_mode": "standard",
+    "host": {
+      "username": "coolplayer",
+      "name": "Cool Player",
+      "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
+      "bio": "Competitive gamer",
+      "social_links": null
     },
-    "is_public": true,
     "min_players": 4,
-    "status": "pending",
+    "current_players": 1,
+    "is_public": true,
     "scheduled_at": "2025-11-22T20:00:00Z",
+    "status": "pending",
     "players": [
       {
-        "user_id": 123,
         "username": "coolplayer",
+        "name": "Cool Player",
+        "avatar": "https://cdn.gamerprotocol.io/avatars/user123.jpg",
         "status": "accepted",
-        "source": "host"
-      },
-      {
-        "user_id": 456,
-        "username": "player2",
-        "status": "pending",
-        "source": "invited"
+        "invited_at": null,
+        "joined_at": "2025-11-22T12:00:00Z"
       }
-    ],
-    "created_at": "2025-11-22T12:00:00Z"
-  }
+    ]
+  },
+  "message": "Lobby created successfully"
 }
 ```
 
@@ -822,8 +850,7 @@ Content-Type: application/json
 
 {
   "type": "rematch",
-  "game_id": "01J3GAME123",
-  "message": "Good game, rematch?"
+  "original_game_ulid": "01J3GAME123"
 }
 ```
 
@@ -836,11 +863,11 @@ X-Client-Key: your-client-key
 Content-Type: application/json
 
 {
-  "type": "challenge",
+  "type": "casual",
   "opponent_username": "player2",
-  "game_title": "checkers",
+  "title_slug": "checkers",
   "mode_id": 3,
-  "message": "Let's play!"
+  "game_settings": {}
 }
 ```
 
@@ -850,21 +877,19 @@ Response:
 {
   "data": {
     "ulid": "01J3PROP...",
-    "type": "challenge",
-    "requester": {
-      "id": 123,
-      "username": "coolplayer"
-    },
-    "recipient": {
-      "id": 456,
-      "username": "player2"
-    },
-    "game_title": "checkers",
+    "requesting_user_id": 123,
+    "opponent_user_id": 456,
+    "type": "casual",
+    "title_slug": "checkers",
     "mode_id": 3,
+    "game_settings": {},
     "status": "pending",
+    "responded_at": null,
     "expires_at": "2025-11-22T12:01:00Z",
-    "created_at": "2025-11-22T12:00:00Z"
-  }
+    "original_game_ulid": null,
+    "game_ulid": null
+  },
+  "message": "Proposal sent successfully"
 }
 ```
 
@@ -874,6 +899,29 @@ Response:
 POST /v1/matchmaking/proposals/01J3PROP.../accept
 Authorization: Bearer 1|abc123...
 X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "ulid": "01J3PROP...",
+    "requesting_user_id": 123,
+    "opponent_user_id": 456,
+    "type": "casual",
+    "title_slug": "checkers",
+    "mode_id": 3,
+    "game_settings": {},
+    "status": "accepted",
+    "responded_at": "2025-11-22T12:00:30Z",
+    "expires_at": "2025-11-22T12:01:00Z",
+    "original_game_ulid": null,
+    "game_ulid": null,
+    "new_game_ulid": "01J3NEWGAME..."
+  },
+  "message": "Proposal accepted. New game created."
+}
 ```
 
 ---
@@ -910,10 +958,10 @@ Response:
   "data": [
     {
       "ulid": "01J3GAME...",
-      "title": "Connect Four",
-      "mode": "Standard",
+      "game_title": "connect-four",
       "status": "active",
-      "current_turn": "01J3PLY1...",
+      "turn_number": 5,
+      "winner_id": null,
       "players": [
         {
           "ulid": "01J3PLY1...",
@@ -926,6 +974,10 @@ Response:
           "is_current_turn": false
         }
       ],
+      "game_state": {
+        "board": [[null, null, null, null, null, null, null], ...],
+        "move_count": 5
+      },
       "created_at": "2025-11-22T12:00:00Z",
       "updated_at": "2025-11-22T12:05:00Z"
     }
@@ -952,10 +1004,10 @@ Response:
 {
   "data": {
     "ulid": "01J3GAME...",
-    "title": "Connect Four",
-    "mode": "Standard",
+    "game_title": "connect-four",
     "status": "active",
-    "current_turn": "01J3PLY1...",
+    "turn_number": 5,
+    "winner_id": null,
     "players": [
       {
         "ulid": "01J3PLY1...",
@@ -974,7 +1026,7 @@ Response:
         "is_winner": false
       }
     ],
-    "state": {
+    "game_state": {
       "board": [[null, null, null, null, null, null, null], ...],
       "move_count": 5,
       "last_move": {
@@ -999,14 +1051,14 @@ Content-Type: application/json
 Idempotency-Key: unique-request-id-123
 
 {
-  "action": "DROP_PIECE",
-  "parameters": {
+  "action_type": "DROP_PIECE",
+  "action_details": {
     "column": 3
   }
 }
 ```
 
-Response (202 Accepted - action queued):
+Response:
 
 ```json
 {
@@ -1018,9 +1070,10 @@ Response (202 Accepted - action queued):
     "parameters": {
       "column": 3
     },
-    "status": "queued",
+    "status": "processed",
     "created_at": "2025-11-22T12:05:30Z"
-  }
+  },
+  "message": "Action applied successfully"
 }
 ```
 
@@ -1037,14 +1090,18 @@ Response:
 ```json
 {
   "data": {
-    "actions": [
+    "options": [
       {
         "action": "DROP_PIECE",
         "valid_parameters": {
           "column": [0, 1, 2, 3, 4, 5, 6]
         }
       }
-    ]
+    ],
+    "is_your_turn": true,
+    "phase": "active",
+    "deadline": "2025-11-22T12:06:00Z",
+    "timelimit_seconds": 300
   }
 }
 ```
@@ -1063,18 +1120,16 @@ Response:
 {
   "data": [
     {
-      "action_id": "01J3ACT001",
-      "player": "01J3PLY1...",
-      "action": "DROP_PIECE",
-      "parameters": { "column": 3 },
-      "timestamp": "2025-11-22T12:01:00Z"
-    },
-    {
-      "action_id": "01J3ACT002",
-      "player": "01J3PLY2...",
-      "action": "DROP_PIECE",
-      "parameters": { "column": 2 },
-      "timestamp": "2025-11-22T12:02:00Z"
+      "ulid": "01J3ACT001",
+      "turn_number": 1,
+      "action_type": "DROP_PIECE",
+      "action_details": { "column": 3 },
+      "player": {
+        "ulid": "01J3PLY1...",
+        "username": "coolplayer"
+      },
+      "status": "processed",
+      "created_at": "2025-11-22T12:01:00Z"
     }
   ]
 }
@@ -1095,9 +1150,17 @@ Response:
   "data": {
     "game_ulid": "01J3GAME...",
     "status": "completed",
-    "outcome": "conceded",
-    "winner": "01J3PLY2...",
-    "completed_at": "2025-11-22T12:10:00Z"
+    "outcome_type": "resignation",
+    "winner": {
+      "ulid": "01J3PLY2...",
+      "username": "opponent"
+    },
+    "is_draw": false,
+    "completed_at": "2025-11-22T12:10:00Z",
+    "duration_seconds": 300,
+    "final_scores": [],
+    "xp_awarded": [],
+    "rewards": []
   }
 }
 ```
@@ -1117,14 +1180,17 @@ Response:
   "data": {
     "game_ulid": "01J3GAME...",
     "status": "completed",
-    "outcome": "win",
+    "outcome_type": "win",
     "winner": {
       "ulid": "01J3PLY1...",
       "username": "coolplayer"
     },
-    "result_type": "connect_four",
+    "is_draw": false,
+    "completed_at": "2025-11-22T12:10:00Z",
     "duration_seconds": 300,
-    "completed_at": "2025-11-22T12:10:00Z"
+    "final_scores": [],
+    "xp_awarded": [],
+    "rewards": []
   }
 }
 ```
@@ -1170,11 +1236,14 @@ Response (shows balance for the authenticated client):
 ```json
 {
   "data": {
-    "client_id": 5,
-    "client_name": "MyGameApp",
-    "tokens": 500.0,
-    "chips": 250.0,
-    "locked_in_games": 50.0
+    "tokens": {
+      "amount": 500.0,
+      "currency_type": "tokens"
+    },
+    "chips": {
+      "amount": 250.0,
+      "currency_type": "chips"
+    }
   }
 }
 ```
@@ -1188,10 +1257,11 @@ X-Client-Key: your-approved-client-key
 Content-Type: application/json
 
 {
-  "action": "add",
+  "user_id": 123,
+  "currency_type": "tokens",
   "amount": 100.00,
-  "currency": "tokens",
-  "reference": "purchase_receipt_xyz"
+  "description": "Daily bonus",
+  "metadata": {}
 }
 ```
 
@@ -1200,15 +1270,10 @@ Response:
 ```json
 {
   "data": {
-    "ulid": "01J3EFG...",
-    "client_id": 5,
-    "action": "add",
-    "amount": 100.0,
-    "currency": "tokens",
-    "reference": "purchase_receipt_xyz",
-    "source": "cashier",
-    "created_at": "2025-11-20T12:00:00Z"
-  }
+    "transaction_ulid": "01J3EFG...",
+    "new_balance": 600.0
+  },
+  "message": "Balance adjusted successfully"
 }
 ```
 
@@ -1247,42 +1312,33 @@ Response includes both types:
   "data": [
     {
       "ulid": "01J3ABC...",
-      "type": "balance_add",
+      "transaction_type": "credit",
+      "currency_type": "tokens",
       "amount": 100.0,
-      "currency": "tokens",
-      "client_id": 5,
-      "client_name": "MyGameApp",
-      "reference": "purchase_receipt_xyz",
-      "subscription_id": null,
+      "description": "Daily bonus",
+      "metadata": [],
+      "reference_id": null,
+      "reference_type": null,
       "created_at": "2025-11-20T12:00:00Z"
     },
     {
       "ulid": "01J3DEF...",
-      "type": "subscription_payment",
+      "transaction_type": "payment",
+      "currency_type": "usd",
       "amount": 9.99,
-      "currency": "usd",
-      "subscription_id": 42,
-      "payment_provider": "stripe",
-      "provider_transaction_id": "pi_1234567890",
-      "payment_status": "completed",
+      "description": "Pro Subscription",
+      "metadata": {
+        "provider": "stripe"
+      },
+      "reference_id": "pi_1234567890",
+      "reference_type": "payment_intent",
       "created_at": "2025-11-20T11:30:00Z"
-    },
-    {
-      "ulid": "01J3GHI...",
-      "type": "iap_purchase",
-      "amount": 4.99,
-      "currency": "usd",
-      "subscription_id": 42,
-      "payment_provider": "google_play",
-      "provider_transaction_id": "GPA.1234-5678-9012",
-      "payment_status": "completed",
-      "created_at": "2025-11-19T10:15:00Z"
     }
   ],
   "meta": {
     "current_page": 1,
     "per_page": 50,
-    "total": 3
+    "total": 2
   }
 }
 ```
@@ -1317,7 +1373,7 @@ Real-time Server-Sent Events (SSE) streams for live platform activity.
 | ------ | --------------------------------- | --------------------------- | ------------------- |
 | `GET`  | `/feeds/games`                    | Stream public game activity | Bearer + Client Key |
 | `GET`  | `/feeds/wins`                     | Stream win announcements    | Bearer + Client Key |
-| `GET`  | `/feeds/leaderboards/{gameTitle}` | Stream leaderboard updates  | Bearer + Client Key |
+| `GET`  | `/feeds/leaderboards/{gameTitle}` | Get leaderboard (JSON)      | Bearer + Client Key |
 | `GET`  | `/feeds/tournaments`              | Stream tournament progress  | Bearer + Client Key |
 | `GET`  | `/feeds/challenges`               | Stream challenge activity   | Bearer + Client Key |
 | `GET`  | `/feeds/achievements`             | Stream achievement unlocks  | Bearer + Client Key |
@@ -1340,6 +1396,33 @@ gamesSource.addEventListener('game-update', (event) => {
 });
 ```
 
+**Example: Get Leaderboard**
+
+```http
+GET /v1/feeds/leaderboards/chess
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "game_title": "chess",
+    "entries": [
+      {
+        "rank": 1,
+        "username": "grandmaster1",
+        "rating": 2800,
+        "wins": 150,
+        "losses": 10
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ### 9. Competitions
@@ -1354,6 +1437,96 @@ Tournament management, brackets, and standings.
 | `GET`  | `/competitions/{tournament:ulid}/structure` | Get tournament format rules | Bearer + Client Key |
 | `GET`  | `/competitions/{tournament:ulid}/bracket`   | Get tournament bracket      | Bearer + Client Key |
 | `GET`  | `/competitions/{tournament:ulid}/standings` | Get current standings       | Bearer + Client Key |
+
+**List Competitions:**
+
+```http
+GET /v1/competitions
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "ulid": "01J3TOUR...",
+      "name": "Weekly Chess Open",
+      "game_title": "chess",
+      "format": "single_elimination",
+      "status": "registration_open",
+      "max_participants": 64,
+      "current_participants": 12,
+      "buy_in_amount": 100,
+      "buy_in_currency": "tokens",
+      "prize_pool": 1000,
+      "rules": {},
+      "starts_at": "2025-11-25T18:00:00Z",
+      "ends_at": "2025-11-25T22:00:00Z",
+      "created_at": "2025-11-20T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 1
+  }
+}
+```
+
+**Enter Tournament:**
+
+```http
+POST /v1/competitions/01J3TOUR.../enter
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "tournament_ulid": "01J3TOUR..."
+  },
+  "message": "Successfully entered tournament"
+}
+```
+
+**Get Bracket:**
+
+```http
+GET /v1/competitions/01J3TOUR.../bracket
+Authorization: Bearer 1|abc123...
+X-Client-Key: your-client-key
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "tournament_ulid": "01J3TOUR...",
+    "format": "single_elimination",
+    "rounds": [
+      {
+        "round_number": 1,
+        "matches": [
+          {
+            "match_id": "01J3MATCH...",
+            "player1": "user1",
+            "player2": "user2",
+            "winner": null
+          }
+        ]
+      }
+    ],
+    "current_round": 1
+  }
+}
+```
 
 ---
 
