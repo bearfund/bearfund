@@ -88,17 +88,19 @@ export {
 } from './useMatchmaking';
 
 /**
- * Billing & Subscription Hooks
+ * Economy & Transaction Hooks
  *
- * React Query hooks for subscription management and platform-specific billing.
+ * React Query hooks for virtual balance management, transactions, and subscriptions.
  */
 export {
+  useBalanceQuery,
+  useTransactionsQuery,
+  useCashier,
   usePlansQuery,
-  useSubscriptionStatus,
-  useQuotas,
+  useSubscriptionQuery,
   useSubscribe,
-  useCustomerPortal,
+  useCancelSubscription,
   useVerifyAppleReceipt,
   useVerifyGoogleReceipt,
   useVerifyTelegramReceipt,
-} from './useBilling';
+} from './useEconomy';

@@ -90,18 +90,22 @@ export type {
   DeclineProposalResponse,
 } from './matchmaking.types';
 
-// Billing types
+// Economy types
 export type {
+  CurrencyBalance,
+  UserBalance,
+  TransactionType,
+  CurrencyType,
+  PaymentProvider,
+  Transaction,
+  CashierRequest,
+  CashierResponse,
   SubscriptionPlan,
-  SubscriptionTier,
-  BillingStatus,
-  UsageQuotas,
   UserSubscription,
-  Invoice,
-  CreateSubscriptionRequest,
-  UpdateSubscriptionRequest,
-  CancelSubscriptionRequest,
-} from './billing.types';
+  SubscribeRequest,
+  VerifyReceiptRequest,
+  VerifyReceiptResponse,
+} from './economy.types';
 
 // Real-time types
 export type {

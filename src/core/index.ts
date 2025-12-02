@@ -75,14 +75,16 @@ export {
 } from './hooks';
 
 /**
- * Billing & Subscription Hooks
+ * Economy & Transaction Hooks
  */
 export {
+  useBalanceQuery,
+  useTransactionsQuery,
+  useCashier,
   usePlansQuery,
-  useSubscriptionStatus,
-  useQuotas,
+  useSubscriptionQuery,
   useSubscribe,
-  useCustomerPortal,
+  useCancelSubscription,
   useVerifyAppleReceipt,
   useVerifyGoogleReceipt,
   useVerifyTelegramReceipt,
