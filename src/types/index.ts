@@ -107,6 +107,30 @@ export type {
   VerifyReceiptResponse,
 } from './economy.types';
 
+// Feed Types
+export type { LeaderboardEntry, Leaderboard } from './feed.types';
+
+// Competition Types
+export type {
+  TournamentFormat,
+  TournamentStatus,
+  TournamentCurrency,
+  Tournament,
+  TournamentEntry,
+  TournamentStructure,
+  BracketMatch,
+  BracketRound,
+  TournamentBracket,
+  TournamentStanding,
+  TournamentStandings,
+  TournamentsResponse,
+  TournamentResponse,
+  TournamentEntryResponse,
+  TournamentStructureResponse,
+  TournamentBracketResponse,
+  TournamentStandingsResponse,
+} from './competition.types';
+
 // Real-time types
 export type {
   RealtimeEventType,

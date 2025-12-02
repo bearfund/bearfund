@@ -88,6 +88,27 @@ export {
 } from './useMatchmaking';
 
 /**
+ * Data Feed Hooks
+ *
+ * React Query hooks for leaderboards and real-time data feeds.
+ */
+export { useLeaderboardQuery } from './useFeed';
+
+/**
+ * Competition Hooks
+ *
+ * React Query hooks for tournaments, brackets, and standings.
+ */
+export {
+  useCompetitionsQuery,
+  useTournamentQuery,
+  useEnterTournament,
+  useTournamentStructureQuery,
+  useTournamentBracketQuery,
+  useTournamentStandingsQuery,
+} from './useCompetition';
+
+/**
  * Economy & Transaction Hooks
  *
  * React Query hooks for virtual balance management, transactions, and subscriptions.

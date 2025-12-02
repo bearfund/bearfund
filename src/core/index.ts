@@ -75,6 +75,23 @@ export {
 } from './hooks';
 
 /**
+ * Data Feed Hooks
+ */
+export { useLeaderboardQuery } from './hooks';
+
+/**
+ * Competition Hooks
+ */
+export {
+  useCompetitionsQuery,
+  useTournamentQuery,
+  useEnterTournament,
+  useTournamentStructureQuery,
+  useTournamentBracketQuery,
+  useTournamentStandingsQuery,
+} from './hooks';
+
+/**
  * Economy & Transaction Hooks
  */
 export {
